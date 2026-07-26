@@ -1,0 +1,39 @@
+services:
+  customer-service-agent:
+    build:
+      context: .
+    image: customer-service-agent:latest
+    environment:
+      APP_ENV: production
+      LLM_API_KEY: ${LLM_API_KEY:?请先在.env中配置LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:?请先在.env中配置LLM_MODEL_NAME}
+      SERVICE_API_KEY: ${SERVICE_API_KEY:?请先在.env中配置SERVICE_API_KEY}
+      API_MAX_CONCURRENCY: ${API_MAX_CONCURRENCY:-1}
+      API_REQUEST_TIMEOUT_SECONDS: ${API_REQUEST_TIMEOUT_SECONDS:-60}
+      EMBEDDING_MODEL_NAME: ${EMBEDDING_MODEL_NAME:-BAAI/bge-small-zh-v1.5}
+      RAG_TOP_K: ${RAG_TOP_K:-3}
+      RAG_MIN_SCORE: ${RAG_MIN_SCORE:-0.45}
+      RAG_KEYWORD_WEIGHT: ${RAG_KEYWORD_WEIGHT:-0.30}
+      RAG_MIN_KEYWORD_SCORE: ${RAG_MIN_KEYWORD_SCORE:-0.35}
+      RAG_CANDIDATE_MULTIPLIER: ${RAG_CANDIDATE_MULTIPLIER:-4}
+      RAG_ENABLE_RERANKER: ${RAG_ENABLE_RERANKER:-true}
+      RERANKER_MODEL_NAME: ${RERANKER_MODEL_NAME:-BAAI/bge-reranker-base}
+      RERANK_CANDIDATE_K: ${RERANK_CANDIDATE_K:-10}
+      INTENT_MIN_CONFIDENCE: ${INTENT_MIN_CONFIDENCE:-0.60}
+      ENABLE_WEB_INGESTION: ${ENABLE_WEB_INGESTION:-false}
+      WEB_SOURCES_PATH: ${WEB_SOURCES_PATH:-knowledge/web_sources.json}
+      WEB_ALLOWED_DOMAINS: ${WEB_ALLOWED_DOMAINS:-}
+      DATABASE_PATH: /app/data/customer_service.db
+      INGESTION_REPORT_PATH: /app/data/ingestion_report.json
+      HF_HOME: /home/appuser/.cache/huggingface
+    ports:
+      - "8000:8000"
+    volumes:
+      - agent-data:/app/data
+      - huggingface-cache:/home/appuser/.cache/huggingface
+    restart: unless-stopped
+
+volumes:
+  agent-data:
+  huggingface-cache:

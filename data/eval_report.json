@@ -1,0 +1,1200 @@
+{
+  "generated_at": "2026-07-26T09:22:24.009774+00:00",
+  "model_name": "deepseek-v4-flash",
+  "embedding_model_name": "BAAI/bge-small-zh-v1.5",
+  "case_count": 54,
+  "metrics": {
+    "intent_accuracy": 100.0,
+    "retrieval_recall_at_k": 100.0,
+    "knowledge_abstention_accuracy": 100.0,
+    "human_transfer_accuracy": 100.0,
+    "answer_keyword_accuracy": 100.0,
+    "pipeline_success_rate": 100.0,
+    "auto_resolution_rate": 75.93,
+    "average_duration_ms": 3050.02,
+    "p95_duration_ms": 4371.8,
+    "category_accuracy": {
+      "direct_retrieval": 100.0,
+      "exact_keyword": 100.0,
+      "general": 100.0,
+      "hard_negative": 100.0,
+      "html_source": 100.0,
+      "multi_fact": 100.0,
+      "multi_section": 100.0,
+      "no_answer": 100.0,
+      "policy_boundary": 100.0,
+      "policy_conflict": 100.0,
+      "semantic_rewrite": 100.0,
+      "version_conflict": 100.0
+    }
+  },
+  "counts": {
+    "intent_correct": 54,
+    "retrieval_correct": 37,
+    "retrieval_total": 37,
+    "rejection_correct": 5,
+    "rejection_total": 5,
+    "transfer_correct": 54,
+    "keyword_correct": 52,
+    "keyword_total": 52,
+    "failure_count": 0
+  },
+  "failures": [],
+  "results": [
+    {
+      "id": "knowledge_001",
+      "category": "general",
+      "question": "你们公司是哪一年成立的？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "company.txt",
+      "expected_sources": [
+        "company.txt"
+      ],
+      "retrieved_sources": [
+        "company.txt"
+      ],
+      "answer": "公司成立于2024年。",
+      "duration_ms": 3097.15,
+      "failures": []
+    },
+    {
+      "id": "knowledge_002",
+      "category": "general",
+      "question": "客服几点上班？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/customer-service-hours.md",
+      "expected_sources": [
+        "policies/customer-service-hours.md"
+      ],
+      "retrieved_sources": [
+        "policies/customer-service-hours.md",
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "人工客服的工作时间为周一到周五 9:00 到 18:00。",
+      "duration_ms": 3207.42,
+      "failures": []
+    },
+    {
+      "id": "knowledge_003",
+      "category": "general",
+      "question": "周六可以联系你们的客服吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/customer-service-hours.md",
+      "expected_sources": [
+        "policies/customer-service-hours.md"
+      ],
+      "retrieved_sources": [
+        "policies/customer-service-hours.md",
+        "policies/shipping-policy.md",
+        "policies/account-security.md"
+      ],
+      "answer": "周六没有人工客服值班，但您仍然可以提交问题，系统会创建工单，由人工客服在下一个工作日处理。",
+      "duration_ms": 3437.6,
+      "failures": []
+    },
+    {
+      "id": "knowledge_004",
+      "category": "general",
+      "question": "退款需要在购买后多少天内申请？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "退款申请需要在购买后 7 个自然日内提交。",
+      "duration_ms": 3165.49,
+      "failures": []
+    },
+    {
+      "id": "knowledge_005",
+      "category": "general",
+      "question": "商品买了5天还可以申请退款吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "answer": "根据政策，商品购买后5天仍在7天退款申请期限内，可以申请退款。",
+      "duration_ms": 3702.66,
+      "failures": []
+    },
+    {
+      "id": "knowledge_006",
+      "category": "general",
+      "question": "商品已经买了8天，还符合退款申请时间吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "answer": "根据退款政策，退款申请需在购买后7个自然日内提交。您购买商品已8天，超过了申请期限，因此不符合退款申请时间。",
+      "duration_ms": 3793.91,
+      "failures": []
+    },
+    {
+      "id": "knowledge_007",
+      "category": "general",
+      "question": "你们的客服电话是多少？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [
+        "policies/account-security.md",
+        "policies/customer-service-hours.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_d69596e7ffe9。",
+      "duration_ms": 2909.73,
+      "failures": []
+    },
+    {
+      "id": "knowledge_008",
+      "category": "general",
+      "question": "你们公司的办公地址在哪里？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [
+        "company.txt",
+        "faq/order-faq.html",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_6a798de2c6c1。",
+      "duration_ms": 2589.78,
+      "failures": []
+    },
+    {
+      "id": "knowledge_009",
+      "category": "semantic_rewrite",
+      "question": "退款审核通过以后，钱一般多久能退回来？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/refund-policy.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "退款审核通过后，资金会原路退回。银行卡和第三方支付通常在3到5个工作日内到账，实际到账时间以支付机构处理进度为准。",
+      "duration_ms": 3121.72,
+      "failures": []
+    },
+    {
+      "id": "knowledge_010",
+      "category": "policy_boundary",
+      "question": "已经使用的数字激活码适用七天退款吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "已经使用的激活码不适用七天退款政策。",
+      "duration_ms": 3262.34,
+      "failures": []
+    },
+    {
+      "id": "knowledge_011",
+      "category": "direct_retrieval",
+      "question": "现货订单支付后多久发货？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/shipping-policy.md",
+      "expected_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "现货订单通常会在支付成功后24小时内发货，周末或法定节假日顺延到下一个工作日。",
+      "duration_ms": 3846.18,
+      "failures": []
+    },
+    {
+      "id": "knowledge_012",
+      "category": "policy_boundary",
+      "question": "周末下单也会在24小时内发货吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/shipping-policy.md",
+      "expected_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/shipping-policy.md",
+        "policies/membership.md",
+        "policies/customer-service-hours.md"
+      ],
+      "answer": "周末下单的发货时间会顺延到下一个工作日，因此不会在24小时内发货。",
+      "duration_ms": 4427.44,
+      "failures": []
+    },
+    {
+      "id": "knowledge_013",
+      "category": "semantic_rewrite",
+      "question": "发货之后大概几天送到？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/shipping-policy.md",
+      "expected_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "根据政策，发货后通常需要3到5个工作日送达。",
+      "duration_ms": 3776.76,
+      "failures": []
+    },
+    {
+      "id": "knowledge_014",
+      "category": "direct_retrieval",
+      "question": "物流单号在哪里查看？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/shipping-policy.md",
+      "expected_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "物流单号可以在订单详情页查看。",
+      "duration_ms": 3682.74,
+      "failures": []
+    },
+    {
+      "id": "knowledge_015",
+      "category": "policy_boundary",
+      "question": "物流多久没有更新可以提交人工处理？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/shipping-policy.md",
+      "expected_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/shipping-policy.md",
+        "policies/invoice-and-payment.md",
+        "policies/customer-service-hours.md"
+      ],
+      "answer": "物流超过48小时没有更新时，可以提交人工工单处理。",
+      "duration_ms": 3692.25,
+      "failures": []
+    },
+    {
+      "id": "knowledge_016",
+      "category": "exact_keyword",
+      "question": "XJ-900保修几年？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "products/xj-900.md",
+      "expected_sources": [
+        "products/xj-900.md"
+      ],
+      "retrieved_sources": [
+        "products/xj-900.md",
+        "products/xj-900-pro.md",
+        "products/xj-900s.md"
+      ],
+      "answer": "标准版 XJ-900 自签收之日起提供 2 年有限保修。",
+      "duration_ms": 3549.74,
+      "failures": []
+    },
+    {
+      "id": "knowledge_017",
+      "category": "exact_keyword",
+      "question": "A100型号的保修期是多久？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "products/a100.md",
+      "expected_sources": [
+        "products/a100.md"
+      ],
+      "retrieved_sources": [
+        "products/a100.md",
+        "policies/warranty-policy.md",
+        "products/xj-900s.md"
+      ],
+      "answer": "A100型号自签收之日起提供1年有限保修。",
+      "duration_ms": 2827.45,
+      "failures": []
+    },
+    {
+      "id": "knowledge_018",
+      "category": "multi_section",
+      "question": "XJ-900和A100的保修时间分别是多少？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": null,
+      "expected_sources": [
+        "products/xj-900.md",
+        "products/a100.md"
+      ],
+      "retrieved_sources": [
+        "products/a100.md",
+        "products/xj-900.md",
+        "products/xj-900-pro.md"
+      ],
+      "answer": "A100的保修时间为1年有限保修，XJ-900标准版的保修时间为2年有限保修。",
+      "duration_ms": 4076.04,
+      "failures": []
+    },
+    {
+      "id": "knowledge_019",
+      "category": "policy_boundary",
+      "question": "产品进水以后还能免费保修吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/warranty-policy.md",
+      "expected_sources": [
+        "policies/warranty-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/warranty-policy.md",
+        "policies/return-and-exchange.md",
+        "products/a100.md"
+      ],
+      "answer": "根据保修政策，产品进水属于人为损坏，不在免费保修范围内，因此无法享受免费保修。",
+      "duration_ms": 3584.63,
+      "failures": []
+    },
+    {
+      "id": "knowledge_020",
+      "category": "multi_fact",
+      "question": "下单可以使用哪些支付方式？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/invoice-and-payment.md",
+      "expected_sources": [
+        "policies/invoice-and-payment.md"
+      ],
+      "retrieved_sources": [
+        "policies/invoice-and-payment.md",
+        "policies/invoice-and-payment.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "目前下单支持银行卡、支付宝和微信支付，暂不支持货到付款。",
+      "duration_ms": 3856.46,
+      "failures": []
+    },
+    {
+      "id": "knowledge_021",
+      "category": "policy_boundary",
+      "question": "支持货到付款吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/invoice-and-payment.md",
+      "expected_sources": [
+        "policies/invoice-and-payment.md"
+      ],
+      "retrieved_sources": [
+        "policies/invoice-and-payment.md",
+        "policies/return-and-exchange.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "我们目前不支持货到付款，您可以选择银行卡、支付宝或微信支付。",
+      "duration_ms": 3913.93,
+      "failures": []
+    },
+    {
+      "id": "knowledge_022",
+      "category": "direct_retrieval",
+      "question": "订单完成后几天内可以申请电子发票？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/invoice-and-payment.md",
+      "expected_sources": [
+        "policies/invoice-and-payment.md"
+      ],
+      "retrieved_sources": [
+        "policies/invoice-and-payment.md",
+        "policies/membership.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "订单完成后7个自然日内可以在订单详情页申请电子发票。",
+      "duration_ms": 3807.13,
+      "failures": []
+    },
+    {
+      "id": "knowledge_023",
+      "category": "semantic_rewrite",
+      "question": "登录密码忘记了怎么找回？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/account-security.md",
+      "expected_sources": [
+        "policies/account-security.md"
+      ],
+      "retrieved_sources": [
+        "policies/account-security.md",
+        "policies/account-security.md"
+      ],
+      "answer": "您可以在登录页面点击“忘记密码”，通过绑定的手机号或电子邮箱接收验证码来重置密码。",
+      "duration_ms": 3322.81,
+      "failures": []
+    },
+    {
+      "id": "knowledge_024",
+      "category": "policy_boundary",
+      "question": "原来的手机号不用了，怎么修改账户绑定？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/account-security.md",
+      "expected_sources": [
+        "policies/account-security.md"
+      ],
+      "retrieved_sources": [
+        "policies/account-security.md",
+        "policies/account-security.md",
+        "policies/invoice-and-payment.md"
+      ],
+      "answer": "如果原手机号无法使用，需要提交人工工单并完成身份核验来修改账户绑定。",
+      "duration_ms": 3232.42,
+      "failures": []
+    },
+    {
+      "id": "knowledge_025",
+      "category": "direct_retrieval",
+      "question": "订单完成后积分什么时候到账？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/membership.md",
+      "expected_sources": [
+        "policies/membership.md"
+      ],
+      "retrieved_sources": [
+        "policies/membership.md",
+        "policies/shipping-policy.md",
+        "policies/invoice-and-payment.md"
+      ],
+      "answer": "订单完成后，积分通常会在 24 小时内到账。",
+      "duration_ms": 3756.97,
+      "failures": []
+    },
+    {
+      "id": "knowledge_026",
+      "category": "policy_boundary",
+      "question": "会员积分可以提现吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/membership.md",
+      "expected_sources": [
+        "policies/membership.md"
+      ],
+      "retrieved_sources": [
+        "policies/membership.md"
+      ],
+      "answer": "会员积分不能提现或兑换现金。",
+      "duration_ms": 2171.69,
+      "failures": []
+    },
+    {
+      "id": "knowledge_027",
+      "category": "direct_retrieval",
+      "question": "积分有效期有多长？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/membership.md",
+      "expected_sources": [
+        "policies/membership.md"
+      ],
+      "retrieved_sources": [
+        "policies/membership.md"
+      ],
+      "answer": "积分有效期为获得之日起 12 个月。",
+      "duration_ms": 2858.45,
+      "failures": []
+    },
+    {
+      "id": "knowledge_028",
+      "category": "html_source",
+      "question": "订单还没发货，可以自己取消吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "faq/order-faq.html",
+      "expected_sources": [
+        "faq/order-faq.html"
+      ],
+      "retrieved_sources": [
+        "faq/order-faq.html",
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "answer": "订单尚未发货时，您可以在订单详情页自行申请取消。",
+      "duration_ms": 3508.58,
+      "failures": []
+    },
+    {
+      "id": "knowledge_029",
+      "category": "html_source",
+      "question": "已经发货的订单还能直接取消吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "faq/order-faq.html",
+      "expected_sources": [
+        "faq/order-faq.html"
+      ],
+      "retrieved_sources": [
+        "faq/order-faq.html",
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "answer": "订单已经发货后不能直接取消，需要签收后按照退款政策申请退货退款。",
+      "duration_ms": 3757.57,
+      "failures": []
+    },
+    {
+      "id": "knowledge_030",
+      "category": "html_source",
+      "question": "订单发货后还能修改收货地址吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "faq/order-faq.html",
+      "expected_sources": [
+        "faq/order-faq.html"
+      ],
+      "retrieved_sources": [
+        "faq/order-faq.html",
+        "policies/invoice-and-payment.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "订单发货后不能修改收货地址。",
+      "duration_ms": 3699.03,
+      "failures": []
+    },
+    {
+      "id": "knowledge_031",
+      "category": "no_answer",
+      "question": "你们支持配送到国外吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [
+        "policies/invoice-and-payment.md",
+        "policies/return-and-exchange.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_07f9ccfcc5b0。",
+      "duration_ms": 2507.72,
+      "failures": []
+    },
+    {
+      "id": "knowledge_032",
+      "category": "no_answer",
+      "question": "你们有可以到店购买的实体门店吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [
+        "policies/invoice-and-payment.md",
+        "policies/shipping-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_8946cfed26f4。",
+      "duration_ms": 3506.6,
+      "failures": []
+    },
+    {
+      "id": "knowledge_033",
+      "category": "no_answer",
+      "question": "礼品卡的有效期是多久？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [
+        "policies/membership.md",
+        "policies/shipping-policy.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_bd47e8a8d8db。",
+      "duration_ms": 3570.86,
+      "failures": []
+    },
+    {
+      "id": "knowledge_034",
+      "category": "hard_negative",
+      "question": "XJ-900 Pro提供几年保修？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "products/xj-900-pro.md",
+      "expected_sources": [
+        "products/xj-900-pro.md"
+      ],
+      "retrieved_sources": [
+        "products/xj-900-pro.md",
+        "products/xj-900.md",
+        "products/xj-900s.md"
+      ],
+      "answer": "XJ-900 Pro自签收之日起提供3年有限保修。",
+      "duration_ms": 2902.85,
+      "failures": []
+    },
+    {
+      "id": "knowledge_035",
+      "category": "hard_negative",
+      "question": "XJ-900S的保修期是多少个月？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "products/xj-900s.md",
+      "expected_sources": [
+        "products/xj-900s.md"
+      ],
+      "retrieved_sources": [
+        "products/xj-900s.md",
+        "products/xj-900.md",
+        "products/xj-900-pro.md"
+      ],
+      "answer": "XJ-900S 自签收之日起提供 18 个月有限保修。",
+      "duration_ms": 3648.06,
+      "failures": []
+    },
+    {
+      "id": "knowledge_036",
+      "category": "hard_negative",
+      "question": "XJ-990是不是也保修两年？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "products/xj-990.md",
+      "expected_sources": [
+        "products/xj-990.md"
+      ],
+      "retrieved_sources": [
+        "products/xj-990.md",
+        "products/xj-900.md",
+        "products/xj-900-pro.md"
+      ],
+      "answer": "根据知识库，XJ-990 自签收之日起仅提供 1 年有限保修，并非 2 年。",
+      "duration_ms": 3353.07,
+      "failures": []
+    },
+    {
+      "id": "knowledge_037",
+      "category": "hard_negative",
+      "question": "不带Pro也不带S的标准版XJ-900保修多久？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "products/xj-900.md",
+      "expected_sources": [
+        "products/xj-900.md"
+      ],
+      "retrieved_sources": [
+        "products/xj-900.md",
+        "products/xj-900s.md",
+        "products/xj-900-pro.md"
+      ],
+      "answer": "标准版 XJ-900 自签收之日起提供 2 年有限保修。",
+      "duration_ms": 3781.95,
+      "failures": []
+    },
+    {
+      "id": "knowledge_038",
+      "category": "policy_conflict",
+      "question": "商品有质量问题，签收12天了还能申请换货吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/return-and-exchange.md",
+      "expected_sources": [
+        "policies/return-and-exchange.md"
+      ],
+      "retrieved_sources": [
+        "policies/return-and-exchange.md",
+        "policies/return-and-exchange.md",
+        "faq/order-faq.html"
+      ],
+      "answer": "根据商品换货政策，存在质量问题的商品可以在签收后15个自然日内申请换货，您签收仅12天，仍在换货期限内，因此可以申请换货。",
+      "duration_ms": 4220.69,
+      "failures": []
+    },
+    {
+      "id": "knowledge_039",
+      "category": "policy_conflict",
+      "question": "商品购买10天后还能直接申请退款吗？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "answer": "根据退款政策，退款申请需要在购买后7个自然日内提交，您购买10天后已超过申请期限，因此无法直接申请退款。",
+      "duration_ms": 3648.13,
+      "failures": []
+    },
+    {
+      "id": "knowledge_040",
+      "category": "policy_conflict",
+      "question": "购买10天发现质量问题，退款和换货哪个还在期限内？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": null,
+      "expected_sources": [
+        "policies/refund-policy.md",
+        "policies/return-and-exchange.md"
+      ],
+      "retrieved_sources": [
+        "policies/return-and-exchange.md",
+        "policies/refund-policy.md",
+        "policies/warranty-policy.md"
+      ],
+      "answer": "购买10天发现质量问题，换货仍在期限内（签收后15个自然日内），但退款已超过申请期限（购买后7个自然日内）。",
+      "duration_ms": 4446.32,
+      "failures": []
+    },
+    {
+      "id": "knowledge_041",
+      "category": "version_conflict",
+      "question": "听说旧政策是5天，现在退款申请期限到底是几天？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/refund-policy.md",
+      "expected_sources": [
+        "policies/refund-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/refund-policy.md",
+        "policies/refund-policy.md",
+        "policies/refund-policy.md"
+      ],
+      "answer": "根据知识库，退款申请需要在购买后7个自然日内提交。",
+      "duration_ms": 3892.92,
+      "failures": []
+    },
+    {
+      "id": "knowledge_042",
+      "category": "version_conflict",
+      "question": "现货现在是12小时还是24小时内发货？",
+      "passed": true,
+      "expected_intent": "knowledge_query",
+      "actual_intent": "knowledge_query",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": "policies/shipping-policy.md",
+      "expected_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "retrieved_sources": [
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md",
+        "policies/shipping-policy.md"
+      ],
+      "answer": "现货订单通常在支付成功后24小时内发货。",
+      "duration_ms": 4371.8,
+      "failures": []
+    },
+    {
+      "id": "service_001",
+      "category": "general",
+      "question": "帮我申请退款",
+      "passed": true,
+      "expected_intent": "service_request",
+      "actual_intent": "service_request",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_a4b55f3a4bdd。",
+      "duration_ms": 1333.8,
+      "failures": []
+    },
+    {
+      "id": "service_002",
+      "category": "general",
+      "question": "帮我查询一下订单到哪里了",
+      "passed": true,
+      "expected_intent": "service_request",
+      "actual_intent": "service_request",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_804ef4a84084。",
+      "duration_ms": 1424.58,
+      "failures": []
+    },
+    {
+      "id": "service_003",
+      "category": "general",
+      "question": "我要投诉这次服务",
+      "passed": true,
+      "expected_intent": "service_request",
+      "actual_intent": "service_request",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_db55e17dc6b1。",
+      "duration_ms": 1570.31,
+      "failures": []
+    },
+    {
+      "id": "service_004",
+      "category": "general",
+      "question": "请帮我转人工客服",
+      "passed": true,
+      "expected_intent": "service_request",
+      "actual_intent": "service_request",
+      "expected_need_human": true,
+      "actual_need_human": true,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_c8d8b38bb730。",
+      "duration_ms": 2195.97,
+      "failures": []
+    },
+    {
+      "id": "chitchat_001",
+      "category": "general",
+      "question": "你好",
+      "passed": true,
+      "expected_intent": "chitchat",
+      "actual_intent": "chitchat",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
+      "duration_ms": 1424.4,
+      "failures": []
+    },
+    {
+      "id": "chitchat_002",
+      "category": "general",
+      "question": "谢谢你的帮助",
+      "passed": true,
+      "expected_intent": "chitchat",
+      "actual_intent": "chitchat",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
+      "duration_ms": 1304.39,
+      "failures": []
+    },
+    {
+      "id": "chitchat_003",
+      "category": "general",
+      "question": "再见",
+      "passed": true,
+      "expected_intent": "chitchat",
+      "actual_intent": "chitchat",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
+      "duration_ms": 1054.48,
+      "failures": []
+    },
+    {
+      "id": "chitchat_004",
+      "category": "general",
+      "question": "你是谁？",
+      "passed": true,
+      "expected_intent": "chitchat",
+      "actual_intent": "chitchat",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": true,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
+      "duration_ms": 1365.12,
+      "failures": []
+    },
+    {
+      "id": "unknown_001",
+      "category": "general",
+      "question": "帮我处理一下",
+      "passed": true,
+      "expected_intent": "unknown",
+      "actual_intent": "unknown",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
+      "duration_ms": 1347.36,
+      "failures": []
+    },
+    {
+      "id": "unknown_002",
+      "category": "general",
+      "question": "那个应该怎么办？",
+      "passed": true,
+      "expected_intent": "unknown",
+      "actual_intent": "unknown",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
+      "duration_ms": 1368.05,
+      "failures": []
+    },
+    {
+      "id": "unknown_003",
+      "category": "general",
+      "question": "继续",
+      "passed": true,
+      "expected_intent": "unknown",
+      "actual_intent": "unknown",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
+      "duration_ms": 1334.07,
+      "failures": []
+    },
+    {
+      "id": "unknown_004",
+      "category": "general",
+      "question": "不对，重新弄一下",
+      "passed": true,
+      "expected_intent": "unknown",
+      "actual_intent": "unknown",
+      "expected_need_human": false,
+      "actual_need_human": false,
+      "auto_resolved": false,
+      "expected_source": null,
+      "expected_sources": [],
+      "retrieved_sources": [],
+      "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
+      "duration_ms": 1491.33,
+      "failures": []
+    }
+  ]
+}

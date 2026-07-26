@@ -1,0 +1,56 @@
+{
+  "started_at": "2026-07-26T11:42:37.091508+00:00",
+  "completed_at": "2026-07-26T11:42:37.298177+00:00",
+  "duration_ms": 206.67,
+  "total_files": 18,
+  "parsed_files": 15,
+  "failed_files": 0,
+  "skipped_files": 3,
+  "total_web_pages": 0,
+  "parsed_web_pages": 0,
+  "failed_web_pages": 0,
+  "skipped_web_pages": 0,
+  "total_sections": 25,
+  "filtered_sections": 0,
+  "total_chunks": 22,
+  "duplicate_files": 0,
+  "duplicate_chunks": 0,
+  "ocr_required_pages": 0,
+  "inactive_documents": 2,
+  "future_documents": 1,
+  "superseded_documents": 0,
+  "invalid_metadata_documents": 0,
+  "issues": [
+    {
+      "source": "archive/refund-policy-v1.md",
+      "stage": "document_filter",
+      "reason": "status_inactive",
+      "message": "文档状态为inactive，不进入当前索引",
+      "metadata": {
+        "doc_id": "refund-policy",
+        "status": "inactive"
+      }
+    },
+    {
+      "source": "drafts/refund-policy-v3.md",
+      "stage": "document_filter",
+      "reason": "status_draft",
+      "message": "文档状态为draft，不进入当前索引",
+      "metadata": {
+        "doc_id": "refund-policy",
+        "status": "draft"
+      }
+    },
+    {
+      "source": "future/shipping-policy-v2.md",
+      "stage": "document_filter",
+      "reason": "not_yet_effective",
+      "message": "文档将在2027-01-01生效",
+      "metadata": {
+        "doc_id": "shipping-policy",
+        "effective_date": "2027-01-01",
+        "as_of_date": "2026-07-26"
+      }
+    }
+  ]
+}

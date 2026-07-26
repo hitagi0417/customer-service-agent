@@ -1,0 +1,492 @@
+[
+  {
+    "id": "knowledge_001",
+    "question": "你们公司是哪一年成立的？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "company.txt",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["2024"]
+  },
+  {
+    "id": "knowledge_002",
+    "question": "客服几点上班？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/customer-service-hours.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["周一到周五", "9:00", "18:00"]
+  },
+  {
+    "id": "knowledge_003",
+    "question": "周六可以联系你们的客服吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/customer-service-hours.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": [
+      ["周六", "周末"],
+      ["没有人工客服", "无人工客服", "不值班"]
+    ]
+  },
+  {
+    "id": "knowledge_004",
+    "question": "退款需要在购买后多少天内申请？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7"]
+  },
+  {
+    "id": "knowledge_005",
+    "question": "商品买了5天还可以申请退款吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7"]
+  },
+  {
+    "id": "knowledge_006",
+    "question": "商品已经买了8天，还符合退款申请时间吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7"]
+  },
+  {
+    "id": "knowledge_007",
+    "question": "你们的客服电话是多少？",
+    "expected_intent": "knowledge_query",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "knowledge_008",
+    "question": "你们公司的办公地址在哪里？",
+    "expected_intent": "knowledge_query",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "knowledge_009",
+    "category": "semantic_rewrite",
+    "question": "退款审核通过以后，钱一般多久能退回来？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["3", "5", "工作日"]
+  },
+  {
+    "id": "knowledge_010",
+    "category": "policy_boundary",
+    "question": "已经使用的数字激活码适用七天退款吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": [
+      ["数字激活码", "激活码"],
+      ["不适用", "不能退款", "不支持退款"]
+    ]
+  },
+  {
+    "id": "knowledge_011",
+    "category": "direct_retrieval",
+    "question": "现货订单支付后多久发货？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/shipping-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["24", "小时"]
+  },
+  {
+    "id": "knowledge_012",
+    "category": "policy_boundary",
+    "question": "周末下单也会在24小时内发货吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/shipping-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["下一个工作日"]
+  },
+  {
+    "id": "knowledge_013",
+    "category": "semantic_rewrite",
+    "question": "发货之后大概几天送到？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/shipping-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["3", "5", "工作日"]
+  },
+  {
+    "id": "knowledge_014",
+    "category": "direct_retrieval",
+    "question": "物流单号在哪里查看？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/shipping-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["订单详情页"]
+  },
+  {
+    "id": "knowledge_015",
+    "category": "policy_boundary",
+    "question": "物流多久没有更新可以提交人工处理？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/shipping-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["48", "小时"]
+  },
+  {
+    "id": "knowledge_016",
+    "category": "exact_keyword",
+    "question": "XJ-900保修几年？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "products/xj-900.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["XJ-900", "2", "年"]
+  },
+  {
+    "id": "knowledge_017",
+    "category": "exact_keyword",
+    "question": "A100型号的保修期是多久？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "products/a100.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["A100", "1", "年"]
+  },
+  {
+    "id": "knowledge_018",
+    "category": "multi_section",
+    "question": "XJ-900和A100的保修时间分别是多少？",
+    "expected_intent": "knowledge_query",
+    "expected_source": null,
+    "expected_sources": [
+      "products/xj-900.md",
+      "products/a100.md"
+    ],
+    "expected_need_human": false,
+    "expected_answer_keywords": ["XJ-900", "2", "A100", "1"]
+  },
+  {
+    "id": "knowledge_019",
+    "category": "policy_boundary",
+    "question": "产品进水以后还能免费保修吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/warranty-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": [
+      "进水",
+      ["免费保修范围", "免费保修"]
+    ]
+  },
+  {
+    "id": "knowledge_020",
+    "category": "multi_fact",
+    "question": "下单可以使用哪些支付方式？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/invoice-and-payment.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["银行卡", "支付宝", "微信"]
+  },
+  {
+    "id": "knowledge_021",
+    "category": "policy_boundary",
+    "question": "支持货到付款吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/invoice-and-payment.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["不支持", "货到付款"]
+  },
+  {
+    "id": "knowledge_022",
+    "category": "direct_retrieval",
+    "question": "订单完成后几天内可以申请电子发票？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/invoice-and-payment.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7", "自然日"]
+  },
+  {
+    "id": "knowledge_023",
+    "category": "semantic_rewrite",
+    "question": "登录密码忘记了怎么找回？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/account-security.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["手机号", "电子邮箱", "验证码"]
+  },
+  {
+    "id": "knowledge_024",
+    "category": "policy_boundary",
+    "question": "原来的手机号不用了，怎么修改账户绑定？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/account-security.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["工单", "身份核验"]
+  },
+  {
+    "id": "knowledge_025",
+    "category": "direct_retrieval",
+    "question": "订单完成后积分什么时候到账？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/membership.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["24", "小时"]
+  },
+  {
+    "id": "knowledge_026",
+    "category": "policy_boundary",
+    "question": "会员积分可以提现吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/membership.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": [
+      ["不能", "无法"],
+      "现金"
+    ]
+  },
+  {
+    "id": "knowledge_027",
+    "category": "direct_retrieval",
+    "question": "积分有效期有多长？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/membership.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["12", "个月"]
+  },
+  {
+    "id": "knowledge_028",
+    "category": "html_source",
+    "question": "订单还没发货，可以自己取消吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "faq/order-faq.html",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["订单详情页", "取消"]
+  },
+  {
+    "id": "knowledge_029",
+    "category": "html_source",
+    "question": "已经发货的订单还能直接取消吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "faq/order-faq.html",
+    "expected_need_human": false,
+    "expected_answer_keywords": [
+      ["不能直接取消", "无法直接取消"],
+      "退款政策"
+    ]
+  },
+  {
+    "id": "knowledge_030",
+    "category": "html_source",
+    "question": "订单发货后还能修改收货地址吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "faq/order-faq.html",
+    "expected_need_human": false,
+    "expected_answer_keywords": [
+      ["不能修改", "无法修改", "不可以修改"]
+    ]
+  },
+  {
+    "id": "knowledge_031",
+    "category": "no_answer",
+    "question": "你们支持配送到国外吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "knowledge_032",
+    "category": "no_answer",
+    "question": "你们有可以到店购买的实体门店吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "knowledge_033",
+    "category": "no_answer",
+    "question": "礼品卡的有效期是多久？",
+    "expected_intent": "knowledge_query",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "knowledge_034",
+    "category": "hard_negative",
+    "question": "XJ-900 Pro提供几年保修？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "products/xj-900-pro.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["XJ-900 Pro", "3", "年"]
+  },
+  {
+    "id": "knowledge_035",
+    "category": "hard_negative",
+    "question": "XJ-900S的保修期是多少个月？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "products/xj-900s.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["XJ-900S", "18", "个月"]
+  },
+  {
+    "id": "knowledge_036",
+    "category": "hard_negative",
+    "question": "XJ-990是不是也保修两年？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "products/xj-990.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["XJ-990", "1", "年"]
+  },
+  {
+    "id": "knowledge_037",
+    "category": "hard_negative",
+    "question": "不带Pro也不带S的标准版XJ-900保修多久？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "products/xj-900.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["XJ-900", "2", "年"]
+  },
+  {
+    "id": "knowledge_038",
+    "category": "policy_conflict",
+    "question": "商品有质量问题，签收12天了还能申请换货吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/return-and-exchange.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["15", "自然日", "换货"]
+  },
+  {
+    "id": "knowledge_039",
+    "category": "policy_conflict",
+    "question": "商品购买10天后还能直接申请退款吗？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7", ["超过", "不符合"]]
+  },
+  {
+    "id": "knowledge_040",
+    "category": "policy_conflict",
+    "question": "购买10天发现质量问题，退款和换货哪个还在期限内？",
+    "expected_intent": "knowledge_query",
+    "expected_sources": [
+      "policies/refund-policy.md",
+      "policies/return-and-exchange.md"
+    ],
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7", "15", "换货"]
+  },
+  {
+    "id": "knowledge_041",
+    "category": "version_conflict",
+    "question": "听说旧政策是5天，现在退款申请期限到底是几天？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/refund-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["7", "自然日"]
+  },
+  {
+    "id": "knowledge_042",
+    "category": "version_conflict",
+    "question": "现货现在是12小时还是24小时内发货？",
+    "expected_intent": "knowledge_query",
+    "expected_source": "policies/shipping-policy.md",
+    "expected_need_human": false,
+    "expected_answer_keywords": ["24", "小时"]
+  },
+  {
+    "id": "service_001",
+    "question": "帮我申请退款",
+    "expected_intent": "service_request",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "service_002",
+    "question": "帮我查询一下订单到哪里了",
+    "expected_intent": "service_request",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "service_003",
+    "question": "我要投诉这次服务",
+    "expected_intent": "service_request",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "service_004",
+    "question": "请帮我转人工客服",
+    "expected_intent": "service_request",
+    "expected_source": null,
+    "expected_need_human": true,
+    "expected_answer_keywords": ["工单"]
+  },
+  {
+    "id": "chitchat_001",
+    "question": "你好",
+    "expected_intent": "chitchat",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": ["智能客服"]
+  },
+  {
+    "id": "chitchat_002",
+    "question": "谢谢你的帮助",
+    "expected_intent": "chitchat",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": []
+  },
+  {
+    "id": "chitchat_003",
+    "question": "再见",
+    "expected_intent": "chitchat",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": []
+  },
+  {
+    "id": "chitchat_004",
+    "question": "你是谁？",
+    "expected_intent": "chitchat",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": ["智能客服"]
+  },
+  {
+    "id": "unknown_001",
+    "question": "帮我处理一下",
+    "expected_intent": "unknown",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": ["补充"]
+  },
+  {
+    "id": "unknown_002",
+    "question": "那个应该怎么办？",
+    "expected_intent": "unknown",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": ["补充"]
+  },
+  {
+    "id": "unknown_003",
+    "question": "继续",
+    "expected_intent": "unknown",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": ["补充"]
+  },
+  {
+    "id": "unknown_004",
+    "question": "不对，重新弄一下",
+    "expected_intent": "unknown",
+    "expected_source": null,
+    "expected_need_human": false,
+    "expected_answer_keywords": ["补充"]
+  }
+]

@@ -1,0 +1,37 @@
+# 环境变量和密钥
+.env
+
+# Python缓存
+__pycache__/
+*.py[cod]
+
+# 虚拟环境
+.venv/
+venv/
+
+# 数据库和运行数据
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# 测试缓存
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 编辑器配置
+.vscode/
+.idea/
+
+# 运行日志与临时进程文件
+*.log
+*.pid
+
+# 静态检查缓存
+.mypy_cache/
+.ruff_cache/
+
+# 早期实验脚本和本地 Codex 技能，不属于正式项目
+1.py
+rag.py
+skills/
