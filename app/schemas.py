@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def utc_now() -> datetime:
@@ -43,6 +43,71 @@ class ChatRequest(BaseModel):
     )
 
 
+class FeedbackRequest(BaseModel):
+    """用户对某次Agent回答提交的反馈。"""
+
+    request_id: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    feedback: Literal[-1, 1] = Field(
+        description="-1表示无帮助，1表示有帮助",
+    )
+
+
+class FeedbackResponse(BaseModel):
+    request_id: str
+    feedback: Literal[-1, 1]
+    saved: bool
+
+
+class TokenUsage(BaseModel):
+    """一次Agent请求累计的大模型Token与成本数据。"""
+
+    model_calls: int = Field(
+        default=0,
+        ge=0,
+        description="实际发起的大模型调用次数",
+    )
+
+    usage_available_calls: int = Field(
+        default=0,
+        ge=0,
+        description="供应商返回了usage的模型调用次数",
+    )
+
+    prompt_tokens: int = Field(
+        default=0,
+        ge=0,
+        description="输入Token总数",
+    )
+
+    completion_tokens: int = Field(
+        default=0,
+        ge=0,
+        description="输出Token总数",
+    )
+
+    total_tokens: int = Field(
+        default=0,
+        ge=0,
+        description="输入与输出Token总数",
+    )
+
+    cached_prompt_tokens: int = Field(
+        default=0,
+        ge=0,
+        description="供应商报告的缓存输入Token数",
+    )
+
+    estimated_cost_usd: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="按配置单价估算的美元成本",
+    )
+
+
 class IntentResult(BaseModel):
     """
     意图识别模块的输出。
@@ -69,6 +134,11 @@ class IntentResult(BaseModel):
     error: str | None = Field(
         default=None,
         description="意图识别失败时的内部错误类型",
+    )
+
+    token_usage: TokenUsage = Field(
+        default_factory=TokenUsage,
+        description="本次意图识别调用的Token数据",
     )
 
 
@@ -209,6 +279,11 @@ class AgentResponse(BaseModel):
         description="整条Agent链路的总耗时",
     )
 
+    token_usage: TokenUsage = Field(
+        default_factory=TokenUsage,
+        description="整条Agent链路累计的Token和成本",
+    )
+
 
 class EvaluationRecord(BaseModel):
     """
@@ -258,6 +333,26 @@ class EvaluationRecord(BaseModel):
         description="调用过的工具名称",
     )
 
+    tool_calls: list[ToolCallRecord] = Field(
+        default_factory=list,
+        description="工具参数、结果、成功状态和耗时明细",
+    )
+
+    cited_chunk_ids: list[str] = Field(
+        default_factory=list,
+        description="最终答案实际引用的知识片段",
+    )
+
+    cited_sources: list[str] = Field(
+        default_factory=list,
+        description="最终引用片段对应的知识来源",
+    )
+
+    token_usage: TokenUsage = Field(
+        default_factory=TokenUsage,
+        description="模型调用Token与估算成本",
+    )
+
     answer: str = Field(
         min_length=1,
         description="Agent最终回答",
@@ -298,3 +393,16 @@ class EvaluationRecord(BaseModel):
         default_factory=utc_now,
         description="记录创建时间",
     )
+
+    @model_validator(mode="after")
+    def validate_citation_metadata(
+        self,
+    ) -> "EvaluationRecord":
+        if len(self.cited_chunk_ids) != len(
+            self.cited_sources
+        ):
+            raise ValueError(
+                "cited_chunk_ids与cited_sources长度必须一致"
+            )
+
+        return self

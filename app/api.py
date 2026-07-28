@@ -27,7 +27,12 @@ from app.database import (
     check_database_health,
     dispose_database_engines,
 )
-from app.schemas import AgentResponse, ChatRequest
+from app.schemas import (
+    AgentResponse,
+    ChatRequest,
+    FeedbackRequest,
+    FeedbackResponse,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -47,6 +52,14 @@ class RuntimeMetrics:
     requests_failed: int = 0
     requests_timed_out: int = 0
     total_duration_ms: float = 0.0
+    human_transfers: int = 0
+    auto_resolved: int = 0
+    tool_calls: int = 0
+    successful_tool_calls: int = 0
+    model_calls: int = 0
+    usage_available_calls: int = 0
+    total_tokens: int = 0
+    estimated_cost_usd: float = 0.0
     lock: threading.Lock = field(
         default_factory=threading.Lock
     )
@@ -56,6 +69,7 @@ class RuntimeMetrics:
         success: bool,
         timed_out: bool,
         duration_ms: float,
+        response: AgentResponse | None = None,
     ) -> None:
         with self.lock:
             self.requests_total += 1
@@ -68,6 +82,36 @@ class RuntimeMetrics:
 
             if timed_out:
                 self.requests_timed_out += 1
+
+            if response is not None:
+                if response.need_human:
+                    self.human_transfers += 1
+
+                if response.auto_resolved:
+                    self.auto_resolved += 1
+
+                self.tool_calls += len(
+                    response.tool_calls
+                )
+                self.successful_tool_calls += sum(
+                    1
+                    for tool_call in response.tool_calls
+                    if tool_call.success
+                )
+                self.model_calls += (
+                    response.token_usage.model_calls
+                )
+                self.usage_available_calls += (
+                    response.token_usage
+                    .usage_available_calls
+                )
+                self.total_tokens += (
+                    response.token_usage.total_tokens
+                )
+                self.estimated_cost_usd += (
+                    response.token_usage
+                    .estimated_cost_usd
+                )
 
     def snapshot(self) -> dict[str, Any]:
         with self.lock:
@@ -95,6 +139,53 @@ class RuntimeMetrics:
                 "average_duration_ms": round(
                     average_duration,
                     2,
+                ),
+                "human_transfer_rate": round(
+                    (
+                        self.human_transfers
+                        / self.requests_succeeded
+                        * 100
+                    )
+                    if self.requests_succeeded
+                    else 0.0,
+                    2,
+                ),
+                "auto_resolution_rate": round(
+                    (
+                        self.auto_resolved
+                        / self.requests_succeeded
+                        * 100
+                    )
+                    if self.requests_succeeded
+                    else 0.0,
+                    2,
+                ),
+                "tool_call_count": self.tool_calls,
+                "tool_success_rate": round(
+                    (
+                        self.successful_tool_calls
+                        / self.tool_calls
+                        * 100
+                    )
+                    if self.tool_calls
+                    else 0.0,
+                    2,
+                ),
+                "model_calls": self.model_calls,
+                "token_usage_coverage_rate": round(
+                    (
+                        self.usage_available_calls
+                        / self.model_calls
+                        * 100
+                    )
+                    if self.model_calls
+                    else 0.0,
+                    2,
+                ),
+                "total_tokens": self.total_tokens,
+                "estimated_cost_usd": round(
+                    self.estimated_cost_usd,
+                    8,
                 ),
             }
 
@@ -223,7 +314,19 @@ def create_app(
         runtime: ServiceRuntime = (
             request.app.state.runtime
         )
-        return runtime.metrics.snapshot()
+        snapshot = runtime.metrics.snapshot()
+        repository = getattr(
+            runtime.agent,
+            "evaluation_repository",
+            None,
+        )
+
+        if repository is not None:
+            snapshot["evaluation"] = (
+                repository.get_summary()
+            )
+
+        return snapshot
 
     @application.post(
         "/api/chat",
@@ -240,6 +343,7 @@ def create_app(
         started_at = time.perf_counter()
         timed_out = False
         success = False
+        agent_response: AgentResponse | None = None
 
         def execute() -> AgentResponse:
             with runtime.concurrency_guard:
@@ -251,7 +355,7 @@ def create_app(
                 )
 
         try:
-            response = await asyncio.wait_for(
+            agent_response = await asyncio.wait_for(
                 asyncio.to_thread(execute),
                 timeout=(
                     settings
@@ -259,7 +363,7 @@ def create_app(
                 ),
             )
             success = True
-            return response
+            return agent_response
 
         except TimeoutError as error:
             timed_out = True
@@ -294,7 +398,49 @@ def create_app(
                 success=success,
                 timed_out=timed_out,
                 duration_ms=duration_ms,
+                response=agent_response,
             )
+
+    @application.post(
+        "/api/feedback",
+        response_model=FeedbackResponse,
+        dependencies=[Depends(require_api_key)],
+    )
+    def save_feedback(
+        payload: FeedbackRequest,
+        request: Request,
+    ) -> FeedbackResponse:
+        runtime: ServiceRuntime = (
+            request.app.state.runtime
+        )
+        repository = getattr(
+            runtime.agent,
+            "evaluation_repository",
+            None,
+        )
+
+        if repository is None:
+            raise HTTPException(
+                status_code=503,
+                detail="评测存储不可用",
+            )
+
+        saved = repository.update_feedback(
+            request_id=payload.request_id,
+            feedback=payload.feedback,
+        )
+
+        if not saved:
+            raise HTTPException(
+                status_code=404,
+                detail="请求记录不存在",
+            )
+
+        return FeedbackResponse(
+            request_id=payload.request_id,
+            feedback=payload.feedback,
+            saved=True,
+        )
 
     return application
 

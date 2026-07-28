@@ -9,6 +9,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Float,
+    ForeignKey,
     Index,
     Integer,
     MetaData,
@@ -16,6 +17,7 @@ from sqlalchemy import (
     Table,
     Text,
     create_engine,
+    event,
     inspect,
     text,
 )
@@ -103,6 +105,66 @@ evaluation_records = Table(
         nullable=False,
         default=list,
     ),
+    Column(
+        "tool_calls",
+        JSON,
+        nullable=False,
+        default=list,
+    ),
+    Column(
+        "cited_chunk_ids",
+        JSON,
+        nullable=False,
+        default=list,
+    ),
+    Column(
+        "cited_sources",
+        JSON,
+        nullable=False,
+        default=list,
+    ),
+    Column(
+        "model_calls",
+        Integer,
+        nullable=False,
+        default=0,
+    ),
+    Column(
+        "usage_available_calls",
+        Integer,
+        nullable=False,
+        default=0,
+    ),
+    Column(
+        "prompt_tokens",
+        Integer,
+        nullable=False,
+        default=0,
+    ),
+    Column(
+        "completion_tokens",
+        Integer,
+        nullable=False,
+        default=0,
+    ),
+    Column(
+        "total_tokens",
+        Integer,
+        nullable=False,
+        default=0,
+    ),
+    Column(
+        "cached_prompt_tokens",
+        Integer,
+        nullable=False,
+        default=0,
+    ),
+    Column(
+        "estimated_cost_usd",
+        Float,
+        nullable=False,
+        default=0.0,
+    ),
     Column("answer", Text, nullable=False),
     Column("need_human", Boolean, nullable=False),
     Column("success", Boolean, nullable=False),
@@ -151,6 +213,59 @@ Index(
     "idx_evaluation_records_intent",
     evaluation_records.c.predicted_intent,
 )
+
+
+tool_execution_records = Table(
+    "tool_execution_records",
+    metadata,
+    Column("tool_call_id", String(160), primary_key=True),
+    Column(
+        "request_id",
+        String(100),
+        ForeignKey(
+            "evaluation_records.request_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    ),
+    Column("call_index", Integer, nullable=False),
+    Column("tool_name", String(100), nullable=False),
+    Column("success", Boolean, nullable=False),
+    Column("duration_ms", Float, nullable=False),
+    Column("error", Text),
+)
+Index(
+    "idx_tool_execution_request_id",
+    tool_execution_records.c.request_id,
+)
+Index(
+    "idx_tool_execution_name",
+    tool_execution_records.c.tool_name,
+)
+
+
+citation_records = Table(
+    "citation_records",
+    metadata,
+    Column("citation_id", String(180), primary_key=True),
+    Column(
+        "request_id",
+        String(100),
+        ForeignKey(
+            "evaluation_records.request_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    ),
+    Column("citation_index", Integer, nullable=False),
+    Column("chunk_id", String(100), nullable=False),
+    Column("source", Text, nullable=False),
+    Column("is_retrieved", Boolean, nullable=False),
+)
+Index(
+    "idx_citation_request_id",
+    citation_records.c.request_id,
+)
 Index(
     "idx_evaluation_records_created_at",
     evaluation_records.c.created_at,
@@ -159,6 +274,15 @@ Index(
 
 _engines: dict[str, Engine] = {}
 _engines_lock = threading.Lock()
+
+
+def _enable_sqlite_foreign_keys(
+    dbapi_connection,
+    connection_record,
+) -> None:
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON")
+    cursor.close()
 
 
 def get_database_url() -> str:
@@ -203,6 +327,11 @@ def get_engine() -> Engine:
                 },
                 pool_pre_ping=True,
             )
+            event.listen(
+                engine,
+                "connect",
+                _enable_sqlite_foreign_keys,
+            )
         else:
             engine = create_engine(
                 database_url,
@@ -240,18 +369,47 @@ def initialize_database() -> None:
         )
     }
 
-    if "auto_resolved" not in columns:
+    legacy_columns = {
+        "auto_resolved": (
+            "INTEGER NOT NULL DEFAULT 0 "
+            "CHECK (auto_resolved IN (0, 1))"
+        ),
+        "tool_calls": "JSON NOT NULL DEFAULT '[]'",
+        "cited_chunk_ids": "JSON NOT NULL DEFAULT '[]'",
+        "cited_sources": "JSON NOT NULL DEFAULT '[]'",
+        "model_calls": "INTEGER NOT NULL DEFAULT 0",
+        "usage_available_calls": (
+            "INTEGER NOT NULL DEFAULT 0"
+        ),
+        "prompt_tokens": "INTEGER NOT NULL DEFAULT 0",
+        "completion_tokens": (
+            "INTEGER NOT NULL DEFAULT 0"
+        ),
+        "total_tokens": "INTEGER NOT NULL DEFAULT 0",
+        "cached_prompt_tokens": (
+            "INTEGER NOT NULL DEFAULT 0"
+        ),
+        "estimated_cost_usd": (
+            "REAL NOT NULL DEFAULT 0.0"
+        ),
+    }
+    missing_columns = {
+        name: definition
+        for name, definition in legacy_columns.items()
+        if name not in columns
+    }
+
+    if missing_columns:
         with engine.begin() as connection:
-            connection.execute(
-                text(
-                    """
-                    ALTER TABLE evaluation_records
-                    ADD COLUMN auto_resolved
-                    INTEGER NOT NULL DEFAULT 0
-                    CHECK (auto_resolved IN (0, 1))
-                    """
+            for name, definition in (
+                missing_columns.items()
+            ):
+                connection.execute(
+                    text(
+                        "ALTER TABLE evaluation_records "
+                        f"ADD COLUMN {name} {definition}"
+                    )
                 )
-            )
 
 
 def check_database_health() -> bool:

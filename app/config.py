@@ -89,6 +89,8 @@ class Settings:
     llm_api_key: str
     llm_base_url: str | None
     llm_model_name: str
+    llm_input_cost_per_million_tokens: float
+    llm_output_cost_per_million_tokens: float
 
     # 向量模型配置
     embedding_model_name: str
@@ -141,6 +143,14 @@ class Settings:
     def __post_init__(self) -> None:
         if self.chunk_size <= 0:
             raise ValueError("CHUNK_SIZE必须大于0")
+        if self.llm_input_cost_per_million_tokens < 0:
+            raise ValueError(
+                "LLM_INPUT_COST_PER_1M_TOKENS不能小于0"
+            )
+        if self.llm_output_cost_per_million_tokens < 0:
+            raise ValueError(
+                "LLM_OUTPUT_COST_PER_1M_TOKENS不能小于0"
+            )
         if self.chunk_overlap < 0:
             raise ValueError("CHUNK_OVERLAP不能小于0")
         if self.chunk_overlap >= self.chunk_size:
@@ -244,6 +254,12 @@ class Settings:
             "llm_api_key_exists": bool(self.llm_api_key),
             "llm_base_url_configured": bool(self.llm_base_url),
             "llm_model_name": self.llm_model_name,
+            "llm_input_cost_per_million_tokens": (
+                self.llm_input_cost_per_million_tokens
+            ),
+            "llm_output_cost_per_million_tokens": (
+                self.llm_output_cost_per_million_tokens
+            ),
             "embedding_model_name": self.embedding_model_name,
             "knowledge_dir": str(self.knowledge_dir),
             "database_path": str(self.database_path),
@@ -323,6 +339,20 @@ settings = Settings(
     llm_base_url=os.getenv("LLM_BASE_URL") or None,
 
     llm_model_name=get_required_env("LLM_MODEL_NAME"),
+
+    llm_input_cost_per_million_tokens=float(
+        os.getenv(
+            "LLM_INPUT_COST_PER_1M_TOKENS",
+            "0",
+        )
+    ),
+
+    llm_output_cost_per_million_tokens=float(
+        os.getenv(
+            "LLM_OUTPUT_COST_PER_1M_TOKENS",
+            "0",
+        )
+    ),
 
     embedding_model_name=os.getenv(
         "EMBEDDING_MODEL_NAME",

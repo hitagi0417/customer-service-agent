@@ -10,6 +10,8 @@ from pydantic import ValidationError
 
 from app.config import settings
 from app.schemas import IntentResult, IntentType
+from app.schemas import TokenUsage
+from app.telemetry import extract_token_usage
 
 
 INTENT_SYSTEM_PROMPT = """
@@ -120,8 +122,10 @@ class IntentClassifier:
             },
             ensure_ascii=False,
         )
+        token_usage = TokenUsage()
 
         try:
+            token_usage = TokenUsage(model_calls=1)
             response = self.client.chat.completions.create(
                 model=settings.llm_model_name,
                 messages=[
@@ -139,6 +143,7 @@ class IntentClassifier:
                     "type": "json_object",
                 },
             )
+            token_usage = extract_token_usage(response)
 
             content = response.choices[0].message.content
 
@@ -146,7 +151,12 @@ class IntentClassifier:
                 raise ValueError("模型返回内容为空")
 
             # 直接使用Pydantic解析和校验模型返回的JSON。
-            return IntentResult.model_validate_json(content)
+            result = IntentResult.model_validate_json(content)
+            return result.model_copy(
+                update={
+                    "token_usage": token_usage,
+                }
+            )
 
         except APITimeoutError:
             return IntentResult(
@@ -155,6 +165,7 @@ class IntentClassifier:
                 reason="意图识别请求超时",
                 fallback_used=True,
                 error="APITimeoutError",
+                token_usage=token_usage,
             )
 
         except APIConnectionError:
@@ -164,6 +175,7 @@ class IntentClassifier:
                 reason="无法连接到意图识别模型",
                 fallback_used=True,
                 error="APIConnectionError",
+                token_usage=token_usage,
             )
 
         except APIStatusError as error:
@@ -173,6 +185,7 @@ class IntentClassifier:
                 reason=f"模型接口返回错误状态：{error.status_code}",
                 fallback_used=True,
                 error=f"APIStatusError:{error.status_code}",
+                token_usage=token_usage,
             )
 
         except (ValidationError, ValueError):
@@ -182,6 +195,7 @@ class IntentClassifier:
                 reason="模型返回的意图格式不正确",
                 fallback_used=True,
                 error="InvalidModelOutput",
+                token_usage=token_usage,
             )
 
         except Exception as error:
@@ -191,4 +205,5 @@ class IntentClassifier:
                 reason=f"意图识别发生未知错误：{type(error).__name__}",
                 fallback_used=True,
                 error=type(error).__name__,
+                token_usage=token_usage,
             )

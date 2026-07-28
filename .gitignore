@@ -13,6 +13,7 @@ venv/
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+data/load_test_report.json
 
 # 测试缓存
 .pytest_cache/

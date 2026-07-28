@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T09:22:24.009774+00:00",
+  "generated_at": "2026-07-28T09:55:23.411642+00:00",
   "model_name": "deepseek-v4-flash",
   "embedding_model_name": "BAAI/bge-small-zh-v1.5",
   "case_count": 54,
@@ -9,10 +9,40 @@
     "knowledge_abstention_accuracy": 100.0,
     "human_transfer_accuracy": 100.0,
     "answer_keyword_accuracy": 100.0,
+    "answer_accuracy": 100.0,
+    "citation_precision": 100.0,
+    "citation_source_recall": 100.0,
+    "citation_case_accuracy": 100.0,
+    "citation_id_validity_rate": 100.0,
+    "tool_success_rate": 100.0,
+    "average_tool_duration_ms": 163.89,
+    "human_transfer_rate": 16.67,
     "pipeline_success_rate": 100.0,
     "auto_resolution_rate": 75.93,
-    "average_duration_ms": 3050.02,
-    "p95_duration_ms": 4371.8,
+    "average_duration_ms": 2146.64,
+    "p95_duration_ms": 3100.81,
+    "model_calls": 96,
+    "token_usage_coverage_rate": 100.0,
+    "prompt_tokens": 58039,
+    "completion_tokens": 8681,
+    "total_tokens": 66720,
+    "cached_prompt_tokens": 52736,
+    "average_tokens_per_request": 1235.56,
+    "estimated_cost_usd": 0.0,
+    "tool_distribution": {
+      "create_service_ticket": {
+        "call_count": 9,
+        "success_count": 9,
+        "success_rate": 100.0,
+        "average_duration_ms": 12.51
+      },
+      "search_knowledge_base": {
+        "call_count": 42,
+        "success_count": 42,
+        "success_rate": 100.0,
+        "average_duration_ms": 196.32
+      }
+    },
     "category_accuracy": {
       "direct_retrieval": 100.0,
       "exact_keyword": 100.0,
@@ -37,6 +67,16 @@
     "transfer_correct": 54,
     "keyword_correct": 52,
     "keyword_total": 52,
+    "citation_case_correct": 37,
+    "citation_case_total": 37,
+    "correct_citation_count": 39,
+    "citation_count": 39,
+    "valid_citation_id_count": 39,
+    "citation_id_count": 39,
+    "tool_success_count": 51,
+    "tool_call_count": 51,
+    "human_transfer_count": 9,
+    "usage_available_calls": 96,
     "failure_count": 0
   },
   "failures": [],
@@ -58,8 +98,31 @@
       "retrieved_sources": [
         "company.txt"
       ],
+      "cited_sources": [
+        "company.txt"
+      ],
+      "cited_chunk_ids": [
+        "72e0252422dc9811"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 104.72,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 774,
+        "completion_tokens": 131,
+        "total_tokens": 905,
+        "cached_prompt_tokens": 640,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "公司成立于2024年。",
-      "duration_ms": 3097.15,
+      "duration_ms": 2545.96,
       "failures": []
     },
     {
@@ -81,8 +144,31 @@
         "policies/shipping-policy.md",
         "policies/shipping-policy.md"
       ],
-      "answer": "人工客服的工作时间为周一到周五 9:00 到 18:00。",
-      "duration_ms": 3207.42,
+      "cited_sources": [
+        "policies/customer-service-hours.md"
+      ],
+      "cited_chunk_ids": [
+        "068d4ea6de8beec9"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 156.46,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1296,
+        "completion_tokens": 203,
+        "total_tokens": 1499,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "人工客服工作时间为周一到周五 9:00 到 18:00。",
+      "duration_ms": 2397.87,
       "failures": []
     },
     {
@@ -104,8 +190,31 @@
         "policies/shipping-policy.md",
         "policies/account-security.md"
       ],
-      "answer": "周六没有人工客服值班，但您仍然可以提交问题，系统会创建工单，由人工客服在下一个工作日处理。",
-      "duration_ms": 3437.6,
+      "cited_sources": [
+        "policies/customer-service-hours.md"
+      ],
+      "cited_chunk_ids": [
+        "068d4ea6de8beec9"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 181.83,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1302,
+        "completion_tokens": 240,
+        "total_tokens": 1542,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "周六没有人工客服值班，但您可以提交问题，系统会创建工单，由人工客服在下一个工作日处理。",
+      "duration_ms": 2633.43,
       "failures": []
     },
     {
@@ -127,8 +236,31 @@
         "policies/return-and-exchange.md",
         "policies/refund-policy.md"
       ],
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "cc9e060d5b953a9c"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 253.54,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1323,
+        "completion_tokens": 167,
+        "total_tokens": 1490,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "退款申请需要在购买后 7 个自然日内提交。",
-      "duration_ms": 3165.49,
+      "duration_ms": 2316.96,
       "failures": []
     },
     {
@@ -150,8 +282,31 @@
         "policies/refund-policy.md",
         "policies/return-and-exchange.md"
       ],
-      "answer": "根据政策，商品购买后5天仍在7天退款申请期限内，可以申请退款。",
-      "duration_ms": 3702.66,
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "cc9e060d5b953a9c"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 245.96,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1325,
+        "completion_tokens": 208,
+        "total_tokens": 1533,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "可以申请退款。根据退款政策，购买后7个自然日内可提交退款申请，您购买第5天仍在期限内。",
+      "duration_ms": 2670.59,
       "failures": []
     },
     {
@@ -173,8 +328,31 @@
         "policies/refund-policy.md",
         "policies/return-and-exchange.md"
       ],
-      "answer": "根据退款政策，退款申请需在购买后7个自然日内提交。您购买商品已8天，超过了申请期限，因此不符合退款申请时间。",
-      "duration_ms": 3793.91,
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "cc9e060d5b953a9c"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 262.64,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1333,
+        "completion_tokens": 192,
+        "total_tokens": 1525,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "不符合，退款申请需在购买后7个自然日内提交，您购买已8天，超过申请期限。",
+      "duration_ms": 2437.8,
       "failures": []
     },
     {
@@ -194,8 +372,33 @@
         "policies/customer-service-hours.md",
         "policies/shipping-policy.md"
       ],
-      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_d69596e7ffe9。",
-      "duration_ms": 2909.73,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 78.48,
+          "error": null
+        },
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 9.97,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1301,
+        "completion_tokens": 132,
+        "total_tokens": 1433,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_4a25e9df6b01。",
+      "duration_ms": 1909.22,
       "failures": []
     },
     {
@@ -215,8 +418,33 @@
         "faq/order-faq.html",
         "policies/shipping-policy.md"
       ],
-      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_6a798de2c6c1。",
-      "duration_ms": 2589.78,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 95.17,
+          "error": null
+        },
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 9.17,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1196,
+        "completion_tokens": 142,
+        "total_tokens": 1338,
+        "cached_prompt_tokens": 1024,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_cff01aefdc53。",
+      "duration_ms": 1895.81,
       "failures": []
     },
     {
@@ -238,8 +466,31 @@
         "policies/refund-policy.md",
         "policies/refund-policy.md"
       ],
-      "answer": "退款审核通过后，资金会原路退回。银行卡和第三方支付通常在3到5个工作日内到账，实际到账时间以支付机构处理进度为准。",
-      "duration_ms": 3121.72,
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "2cb1de2c1f833119"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 256.85,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1324,
+        "completion_tokens": 175,
+        "total_tokens": 1499,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "退款审核通过后，钱通常会在3到5个工作日内原路退回，实际到账时间以支付机构处理进度为准。",
+      "duration_ms": 2260.14,
       "failures": []
     },
     {
@@ -261,8 +512,31 @@
         "policies/return-and-exchange.md",
         "policies/refund-policy.md"
       ],
-      "answer": "已经使用的激活码不适用七天退款政策。",
-      "duration_ms": 3262.34,
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "ab3b65babfe88ead"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 240.65,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1328,
+        "completion_tokens": 177,
+        "total_tokens": 1505,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "已经使用的数字激活码不适用七天退款政策。",
+      "duration_ms": 2190.06,
       "failures": []
     },
     {
@@ -284,8 +558,31 @@
         "policies/shipping-policy.md",
         "policies/shipping-policy.md"
       ],
-      "answer": "现货订单通常会在支付成功后24小时内发货，周末或法定节假日顺延到下一个工作日。",
-      "duration_ms": 3846.18,
+      "cited_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "998c7242d95da7b9"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 245.2,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1292,
+        "completion_tokens": 207,
+        "total_tokens": 1499,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "现货订单通常会在支付成功后 24 小时内发货。周末或法定节假日下单时，发货时间顺延到下一个工作日。",
+      "duration_ms": 2611.71,
       "failures": []
     },
     {
@@ -307,8 +604,31 @@
         "policies/membership.md",
         "policies/customer-service-hours.md"
       ],
-      "answer": "周末下单的发货时间会顺延到下一个工作日，因此不会在24小时内发货。",
-      "duration_ms": 4427.44,
+      "cited_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "998c7242d95da7b9"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 260.1,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1325,
+        "completion_tokens": 224,
+        "total_tokens": 1549,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "周末或法定节假日下单时，发货时间顺延到下一个工作日，因此不会在24小时内发货。",
+      "duration_ms": 2544.24,
       "failures": []
     },
     {
@@ -330,8 +650,31 @@
         "policies/shipping-policy.md",
         "policies/shipping-policy.md"
       ],
-      "answer": "根据政策，发货后通常需要3到5个工作日送达。",
-      "duration_ms": 3776.76,
+      "cited_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "f5cc1ee979d555d2"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 242.74,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1290,
+        "completion_tokens": 185,
+        "total_tokens": 1475,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "订单发货后通常需要 3 到 5 个工作日送达，但偏远地区、极端天气和物流高峰期可能延迟。",
+      "duration_ms": 2657.22,
       "failures": []
     },
     {
@@ -353,8 +696,31 @@
         "policies/shipping-policy.md",
         "policies/shipping-policy.md"
       ],
-      "answer": "物流单号可以在订单详情页查看。",
-      "duration_ms": 3682.74,
+      "cited_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "27468b327318a398"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 75.1,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1290,
+        "completion_tokens": 179,
+        "total_tokens": 1469,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "订单发货后，您可以在订单详情页查看物流单号。",
+      "duration_ms": 2375.44,
       "failures": []
     },
     {
@@ -376,8 +742,31 @@
         "policies/invoice-and-payment.md",
         "policies/customer-service-hours.md"
       ],
+      "cited_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "27468b327318a398"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 249.26,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1330,
+        "completion_tokens": 180,
+        "total_tokens": 1510,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "物流超过48小时没有更新时，可以提交人工工单处理。",
-      "duration_ms": 3692.25,
+      "duration_ms": 2709.77,
       "failures": []
     },
     {
@@ -399,8 +788,31 @@
         "products/xj-900-pro.md",
         "products/xj-900s.md"
       ],
+      "cited_sources": [
+        "products/xj-900.md"
+      ],
+      "cited_chunk_ids": [
+        "81ee7fe8a525634d"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 190.75,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1328,
+        "completion_tokens": 184,
+        "total_tokens": 1512,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "标准版 XJ-900 自签收之日起提供 2 年有限保修。",
-      "duration_ms": 3549.74,
+      "duration_ms": 2540.46,
       "failures": []
     },
     {
@@ -422,8 +834,31 @@
         "policies/warranty-policy.md",
         "products/xj-900s.md"
       ],
+      "cited_sources": [
+        "products/a100.md"
+      ],
+      "cited_chunk_ids": [
+        "daa074a33624beb2"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 230.27,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1302,
+        "completion_tokens": 193,
+        "total_tokens": 1495,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "A100型号自签收之日起提供1年有限保修。",
-      "duration_ms": 2827.45,
+      "duration_ms": 3351.34,
       "failures": []
     },
     {
@@ -446,8 +881,33 @@
         "products/xj-900.md",
         "products/xj-900-pro.md"
       ],
-      "answer": "A100的保修时间为1年有限保修，XJ-900标准版的保修时间为2年有限保修。",
-      "duration_ms": 4076.04,
+      "cited_sources": [
+        "products/a100.md",
+        "products/xj-900.md"
+      ],
+      "cited_chunk_ids": [
+        "daa074a33624beb2",
+        "81ee7fe8a525634d"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 201.3,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1303,
+        "completion_tokens": 280,
+        "total_tokens": 1583,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "根据知识库，A100的保修时间为自签收之日起1年有限保修；XJ-900标准版的保修时间为自签收之日起2年有限保修。",
+      "duration_ms": 3473.6,
       "failures": []
     },
     {
@@ -469,8 +929,31 @@
         "policies/return-and-exchange.md",
         "products/a100.md"
       ],
-      "answer": "根据保修政策，产品进水属于人为损坏，不在免费保修范围内，因此无法享受免费保修。",
-      "duration_ms": 3584.63,
+      "cited_sources": [
+        "policies/warranty-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "db3ab572515ec45b"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 206.55,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1299,
+        "completion_tokens": 170,
+        "total_tokens": 1469,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "根据保修政策，进水属于人为损坏，不属于免费保修范围。",
+      "duration_ms": 2441.29,
       "failures": []
     },
     {
@@ -492,8 +975,31 @@
         "policies/invoice-and-payment.md",
         "policies/shipping-policy.md"
       ],
-      "answer": "目前下单支持银行卡、支付宝和微信支付，暂不支持货到付款。",
-      "duration_ms": 3856.46,
+      "cited_sources": [
+        "policies/invoice-and-payment.md"
+      ],
+      "cited_chunk_ids": [
+        "09a0eaa3b3cbecb5"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 163.95,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1301,
+        "completion_tokens": 185,
+        "total_tokens": 1486,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "订单支持银行卡、支付宝和微信支付，暂不支持货到付款。",
+      "duration_ms": 2380.61,
       "failures": []
     },
     {
@@ -515,8 +1021,31 @@
         "policies/return-and-exchange.md",
         "policies/refund-policy.md"
       ],
-      "answer": "我们目前不支持货到付款，您可以选择银行卡、支付宝或微信支付。",
-      "duration_ms": 3913.93,
+      "cited_sources": [
+        "policies/invoice-and-payment.md"
+      ],
+      "cited_chunk_ids": [
+        "09a0eaa3b3cbecb5"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 196.63,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1296,
+        "completion_tokens": 163,
+        "total_tokens": 1459,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "暂不支持货到付款，目前订单支持银行卡、支付宝和微信支付。",
+      "duration_ms": 2768.57,
       "failures": []
     },
     {
@@ -538,8 +1067,31 @@
         "policies/membership.md",
         "policies/shipping-policy.md"
       ],
+      "cited_sources": [
+        "policies/invoice-and-payment.md"
+      ],
+      "cited_chunk_ids": [
+        "b7c8ebb9ca3b6308"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 257.84,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1339,
+        "completion_tokens": 187,
+        "total_tokens": 1526,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "订单完成后7个自然日内可以在订单详情页申请电子发票。",
-      "duration_ms": 3807.13,
+      "duration_ms": 2781.29,
       "failures": []
     },
     {
@@ -560,8 +1112,31 @@
         "policies/account-security.md",
         "policies/account-security.md"
       ],
-      "answer": "您可以在登录页面点击“忘记密码”，通过绑定的手机号或电子邮箱接收验证码来重置密码。",
-      "duration_ms": 3322.81,
+      "cited_sources": [
+        "policies/account-security.md"
+      ],
+      "cited_chunk_ids": [
+        "1be8384dbe05dabf"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 62.46,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1070,
+        "completion_tokens": 208,
+        "total_tokens": 1278,
+        "cached_prompt_tokens": 896,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "您好，如果忘记了登录密码，可以在登录页面点击“忘记密码”，然后使用您绑定的手机号或电子邮箱接收验证码来重置密码。",
+      "duration_ms": 2555.08,
       "failures": []
     },
     {
@@ -583,8 +1158,31 @@
         "policies/account-security.md",
         "policies/invoice-and-payment.md"
       ],
-      "answer": "如果原手机号无法使用，需要提交人工工单并完成身份核验来修改账户绑定。",
-      "duration_ms": 3232.42,
+      "cited_sources": [
+        "policies/account-security.md"
+      ],
+      "cited_chunk_ids": [
+        "4608d96df7485619"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 167.65,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1318,
+        "completion_tokens": 227,
+        "total_tokens": 1545,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "如果原手机号已无法使用，需要提交人工工单并完成身份核验来修改账户绑定信息。",
+      "duration_ms": 2434.52,
       "failures": []
     },
     {
@@ -606,8 +1204,31 @@
         "policies/shipping-policy.md",
         "policies/invoice-and-payment.md"
       ],
+      "cited_sources": [
+        "policies/membership.md"
+      ],
+      "cited_chunk_ids": [
+        "e71d75f1b0e5b8f5"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 240.4,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1335,
+        "completion_tokens": 179,
+        "total_tokens": 1514,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "订单完成后，积分通常会在 24 小时内到账。",
-      "duration_ms": 3756.97,
+      "duration_ms": 2422.72,
       "failures": []
     },
     {
@@ -627,8 +1248,31 @@
       "retrieved_sources": [
         "policies/membership.md"
       ],
-      "answer": "会员积分不能提现或兑换现金。",
-      "duration_ms": 2171.69,
+      "cited_sources": [
+        "policies/membership.md"
+      ],
+      "cited_chunk_ids": [
+        "e71d75f1b0e5b8f5"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 50.42,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 883,
+        "completion_tokens": 167,
+        "total_tokens": 1050,
+        "cached_prompt_tokens": 640,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "根据会员积分规则，会员积分不能兑换现金，因此无法提现。",
+      "duration_ms": 2323.55,
       "failures": []
     },
     {
@@ -648,8 +1292,31 @@
       "retrieved_sources": [
         "policies/membership.md"
       ],
-      "answer": "积分有效期为获得之日起 12 个月。",
-      "duration_ms": 2858.45,
+      "cited_sources": [
+        "policies/membership.md"
+      ],
+      "cited_chunk_ids": [
+        "e71d75f1b0e5b8f5"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 54.12,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 879,
+        "completion_tokens": 159,
+        "total_tokens": 1038,
+        "cached_prompt_tokens": 640,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "积分有效期为获得之日起12个月。",
+      "duration_ms": 2062.4,
       "failures": []
     },
     {
@@ -671,8 +1338,31 @@
         "policies/refund-policy.md",
         "policies/return-and-exchange.md"
       ],
+      "cited_sources": [
+        "faq/order-faq.html"
+      ],
+      "cited_chunk_ids": [
+        "a6e2f5b22d648705"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 251.32,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1309,
+        "completion_tokens": 191,
+        "total_tokens": 1500,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "订单尚未发货时，您可以在订单详情页自行申请取消。",
-      "duration_ms": 3508.58,
+      "duration_ms": 2836.5,
       "failures": []
     },
     {
@@ -694,8 +1384,31 @@
         "policies/refund-policy.md",
         "policies/return-and-exchange.md"
       ],
-      "answer": "订单已经发货后不能直接取消，需要签收后按照退款政策申请退货退款。",
-      "duration_ms": 3757.57,
+      "cited_sources": [
+        "faq/order-faq.html"
+      ],
+      "cited_chunk_ids": [
+        "a6e2f5b22d648705"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 243.37,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1306,
+        "completion_tokens": 214,
+        "total_tokens": 1520,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "已经发货的订单不能直接取消。您需要先签收商品，然后根据退款政策申请退货退款。",
+      "duration_ms": 2549.55,
       "failures": []
     },
     {
@@ -717,8 +1430,31 @@
         "policies/invoice-and-payment.md",
         "policies/shipping-policy.md"
       ],
+      "cited_sources": [
+        "faq/order-faq.html"
+      ],
+      "cited_chunk_ids": [
+        "a6e2f5b22d648705"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 244.07,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1311,
+        "completion_tokens": 169,
+        "total_tokens": 1480,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "订单发货后不能修改收货地址。",
-      "duration_ms": 3699.03,
+      "duration_ms": 2316.7,
       "failures": []
     },
     {
@@ -738,8 +1474,33 @@
         "policies/return-and-exchange.md",
         "policies/refund-policy.md"
       ],
-      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_07f9ccfcc5b0。",
-      "duration_ms": 2507.72,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 142.65,
+          "error": null
+        },
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 9.25,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1298,
+        "completion_tokens": 110,
+        "total_tokens": 1408,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_c45e10a0746b。",
+      "duration_ms": 2266.92,
       "failures": []
     },
     {
@@ -759,8 +1520,33 @@
         "policies/shipping-policy.md",
         "policies/return-and-exchange.md"
       ],
-      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_8946cfed26f4。",
-      "duration_ms": 3506.6,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 94.48,
+          "error": null
+        },
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 18.92,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1300,
+        "completion_tokens": 172,
+        "total_tokens": 1472,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_0c2b0cbab28f。",
+      "duration_ms": 2109.78,
       "failures": []
     },
     {
@@ -780,8 +1566,33 @@
         "policies/shipping-policy.md",
         "policies/refund-policy.md"
       ],
-      "answer": "现有知识不足以可靠回答这个问题。已为你创建人工客服工单，工单编号为：ticket_bd47e8a8d8db。",
-      "duration_ms": 3570.86,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 179.6,
+          "error": null
+        },
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 9.32,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1319,
+        "completion_tokens": 158,
+        "total_tokens": 1477,
+        "cached_prompt_tokens": 1152,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "虽然找到了相关知识，但暂时无法生成可靠回答。已为你创建人工客服工单，工单编号为：ticket_e23b7e0a2e1b。",
+      "duration_ms": 2087.54,
       "failures": []
     },
     {
@@ -803,8 +1614,31 @@
         "products/xj-900.md",
         "products/xj-900s.md"
       ],
-      "answer": "XJ-900 Pro自签收之日起提供3年有限保修。",
-      "duration_ms": 2902.85,
+      "cited_sources": [
+        "products/xj-900-pro.md"
+      ],
+      "cited_chunk_ids": [
+        "779d2d9b3c112029"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 197.41,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1332,
+        "completion_tokens": 189,
+        "total_tokens": 1521,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "XJ-900 Pro 自签收之日起提供 3 年有限保修。",
+      "duration_ms": 2199.88,
       "failures": []
     },
     {
@@ -826,8 +1660,31 @@
         "products/xj-900.md",
         "products/xj-900-pro.md"
       ],
-      "answer": "XJ-900S 自签收之日起提供 18 个月有限保修。",
-      "duration_ms": 3648.06,
+      "cited_sources": [
+        "products/xj-900s.md"
+      ],
+      "cited_chunk_ids": [
+        "369d6f44c6ab28cd"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 235.57,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1336,
+        "completion_tokens": 178,
+        "total_tokens": 1514,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "XJ-900S的保修期为18个月，自签收之日起计算。",
+      "duration_ms": 2406.67,
       "failures": []
     },
     {
@@ -849,8 +1706,31 @@
         "products/xj-900.md",
         "products/xj-900-pro.md"
       ],
-      "answer": "根据知识库，XJ-990 自签收之日起仅提供 1 年有限保修，并非 2 年。",
-      "duration_ms": 3353.07,
+      "cited_sources": [
+        "products/xj-990.md"
+      ],
+      "cited_chunk_ids": [
+        "75a4b57a4c76f968"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 174.62,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1325,
+        "completion_tokens": 176,
+        "total_tokens": 1501,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "根据知识库，XJ-990 自签收之日起提供 1 年有限保修，并非两年。",
+      "duration_ms": 2630.63,
       "failures": []
     },
     {
@@ -872,8 +1752,31 @@
         "products/xj-900s.md",
         "products/xj-900-pro.md"
       ],
+      "cited_sources": [
+        "products/xj-900.md"
+      ],
+      "cited_chunk_ids": [
+        "81ee7fe8a525634d"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 205.28,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1342,
+        "completion_tokens": 164,
+        "total_tokens": 1506,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "标准版 XJ-900 自签收之日起提供 2 年有限保修。",
-      "duration_ms": 3781.95,
+      "duration_ms": 2152.43,
       "failures": []
     },
     {
@@ -895,8 +1798,31 @@
         "policies/return-and-exchange.md",
         "faq/order-faq.html"
       ],
-      "answer": "根据商品换货政策，存在质量问题的商品可以在签收后15个自然日内申请换货，您签收仅12天，仍在换货期限内，因此可以申请换货。",
-      "duration_ms": 4220.69,
+      "cited_sources": [
+        "policies/return-and-exchange.md"
+      ],
+      "cited_chunk_ids": [
+        "ffd82c0acc127543"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 260.32,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1321,
+        "completion_tokens": 256,
+        "total_tokens": 1577,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "可以申请换货。根据换货政策，商品存在质量问题时，可以在签收后15个自然日内申请换货，您签收12天仍在期限内。",
+      "duration_ms": 2828.66,
       "failures": []
     },
     {
@@ -918,8 +1844,31 @@
         "policies/refund-policy.md",
         "policies/return-and-exchange.md"
       ],
-      "answer": "根据退款政策，退款申请需要在购买后7个自然日内提交，您购买10天后已超过申请期限，因此无法直接申请退款。",
-      "duration_ms": 3648.13,
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "cc9e060d5b953a9c"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 257.93,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1327,
+        "completion_tokens": 210,
+        "total_tokens": 1537,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "购买10天后已超过退款申请期限（7个自然日），无法直接申请退款。",
+      "duration_ms": 2420.85,
       "failures": []
     },
     {
@@ -942,8 +1891,33 @@
         "policies/refund-policy.md",
         "policies/warranty-policy.md"
       ],
-      "answer": "购买10天发现质量问题，换货仍在期限内（签收后15个自然日内），但退款已超过申请期限（购买后7个自然日内）。",
-      "duration_ms": 4446.32,
+      "cited_sources": [
+        "policies/return-and-exchange.md",
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "ffd82c0acc127543",
+        "cc9e060d5b953a9c"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 281.56,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1345,
+        "completion_tokens": 266,
+        "total_tokens": 1611,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "购买10天发现质量问题，换货仍在15天换货期限内，但已超过7天退款申请期限。",
+      "duration_ms": 3100.81,
       "failures": []
     },
     {
@@ -965,8 +1939,31 @@
         "policies/refund-policy.md",
         "policies/refund-policy.md"
       ],
-      "answer": "根据知识库，退款申请需要在购买后7个自然日内提交。",
-      "duration_ms": 3892.92,
+      "cited_sources": [
+        "policies/refund-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "cc9e060d5b953a9c"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 257.73,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1328,
+        "completion_tokens": 221,
+        "total_tokens": 1549,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "根据最新的退款政策，退款申请需要在购买后7个自然日内提交。",
+      "duration_ms": 2705.18,
       "failures": []
     },
     {
@@ -988,8 +1985,31 @@
         "policies/shipping-policy.md",
         "policies/shipping-policy.md"
       ],
+      "cited_sources": [
+        "policies/shipping-policy.md"
+      ],
+      "cited_chunk_ids": [
+        "998c7242d95da7b9"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "search_knowledge_base",
+          "success": true,
+          "duration_ms": 248.64,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 2,
+        "usage_available_calls": 2,
+        "prompt_tokens": 1296,
+        "completion_tokens": 174,
+        "total_tokens": 1470,
+        "cached_prompt_tokens": 1280,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "现货订单通常在支付成功后24小时内发货。",
-      "duration_ms": 4371.8,
+      "duration_ms": 2350.49,
       "failures": []
     },
     {
@@ -1005,8 +2025,27 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
-      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_a4b55f3a4bdd。",
-      "duration_ms": 1333.8,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 18.58,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 380,
+        "completion_tokens": 51,
+        "total_tokens": 431,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_a4a29cee511d。",
+      "duration_ms": 791.74,
       "failures": []
     },
     {
@@ -1022,8 +2061,27 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
-      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_804ef4a84084。",
-      "duration_ms": 1424.58,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 8.98,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 383,
+        "completion_tokens": 68,
+        "total_tokens": 451,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_089bcdeb00e4。",
+      "duration_ms": 1081.17,
       "failures": []
     },
     {
@@ -1039,8 +2097,27 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
-      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_db55e17dc6b1。",
-      "duration_ms": 1570.31,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 9.44,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 381,
+        "completion_tokens": 72,
+        "total_tokens": 453,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_4166388790f6。",
+      "duration_ms": 934.61,
       "failures": []
     },
     {
@@ -1056,8 +2133,27 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
-      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_c8d8b38bb730。",
-      "duration_ms": 2195.97,
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [
+        {
+          "tool_name": "create_service_ticket",
+          "success": true,
+          "duration_ms": 18.99,
+          "error": null
+        }
+      ],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 382,
+        "completion_tokens": 66,
+        "total_tokens": 448,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
+      "answer": "你的请求需要人工客服处理，已创建工单，工单编号为：ticket_240455820cc6。",
+      "duration_ms": 884.77,
       "failures": []
     },
     {
@@ -1073,8 +2169,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 378,
+        "completion_tokens": 50,
+        "total_tokens": 428,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
-      "duration_ms": 1424.4,
+      "duration_ms": 936.51,
       "failures": []
     },
     {
@@ -1090,8 +2198,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 380,
+        "completion_tokens": 56,
+        "total_tokens": 436,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
-      "duration_ms": 1304.39,
+      "duration_ms": 747.62,
       "failures": []
     },
     {
@@ -1107,8 +2227,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 378,
+        "completion_tokens": 52,
+        "total_tokens": 430,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
-      "duration_ms": 1054.48,
+      "duration_ms": 844.17,
       "failures": []
     },
     {
@@ -1124,8 +2256,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 379,
+        "completion_tokens": 55,
+        "total_tokens": 434,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "你好，我是智能客服助手。你可以向我咨询公司信息、客服时间或退款政策。",
-      "duration_ms": 1365.12,
+      "duration_ms": 891.79,
       "failures": []
     },
     {
@@ -1141,8 +2285,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 380,
+        "completion_tokens": 98,
+        "total_tokens": 478,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
-      "duration_ms": 1347.36,
+      "duration_ms": 1128.22,
       "failures": []
     },
     {
@@ -1158,8 +2314,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 381,
+        "completion_tokens": 61,
+        "total_tokens": 442,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
-      "duration_ms": 1368.05,
+      "duration_ms": 914.44,
       "failures": []
     },
     {
@@ -1175,8 +2343,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 378,
+        "completion_tokens": 69,
+        "total_tokens": 447,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
-      "duration_ms": 1334.07,
+      "duration_ms": 969.35,
       "failures": []
     },
     {
@@ -1192,8 +2372,20 @@
       "expected_source": null,
       "expected_sources": [],
       "retrieved_sources": [],
+      "cited_sources": [],
+      "cited_chunk_ids": [],
+      "tool_calls": [],
+      "token_usage": {
+        "model_calls": 1,
+        "usage_available_calls": 1,
+        "prompt_tokens": 382,
+        "completion_tokens": 91,
+        "total_tokens": 473,
+        "cached_prompt_tokens": 256,
+        "estimated_cost_usd": 0.0
+      },
       "answer": "我还不能确定你需要办理什么。请补充具体问题，例如“退款需要什么条件”或“帮我转人工客服”。",
-      "duration_ms": 1491.33,
+      "duration_ms": 1139.95,
       "failures": []
     }
   ]

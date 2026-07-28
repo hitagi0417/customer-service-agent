@@ -11,6 +11,8 @@ from app.schemas import (
     EvaluationRecord,
     IntentType,
     KnowledgeMatch,
+    TokenUsage,
+    ToolCallRecord,
 )
 from app.tools import CustomerServiceTools
 
@@ -236,6 +238,25 @@ def test_evaluation_record_can_be_saved(
         tool_names=[
             "search_knowledge_base"
         ],
+        tool_calls=[
+            ToolCallRecord(
+                tool_name="search_knowledge_base",
+                arguments={"query": "客服几点上班？"},
+                success=True,
+                result={"match_count": 1},
+                duration_ms=20.0,
+            )
+        ],
+        cited_chunk_ids=["chunk_test_001"],
+        cited_sources=["company.txt"],
+        token_usage=TokenUsage(
+            model_calls=2,
+            usage_available_calls=2,
+            prompt_tokens=100,
+            completion_tokens=20,
+            total_tokens=120,
+            estimated_cost_usd=0.001,
+        ),
         answer=(
             "客服工作时间是周一到周五"
             "9:00到18:00。"
@@ -263,6 +284,11 @@ def test_evaluation_record_can_be_saved(
     assert saved.retrieved_chunk_ids == [
         "chunk_test_001"
     ]
+    assert saved.tool_calls[0].success is True
+    assert saved.cited_chunk_ids == [
+        "chunk_test_001"
+    ]
+    assert saved.token_usage.total_tokens == 120
 
 
 def test_user_feedback_is_preserved(
@@ -333,6 +359,24 @@ def test_evaluation_summary(
         auto_resolved=True,
         total_duration_ms=1000.0,
         user_feedback=1,
+        tool_calls=[
+            ToolCallRecord(
+                tool_name="search_knowledge_base",
+                success=True,
+                duration_ms=10.0,
+            )
+        ],
+        cited_chunk_ids=["chunk_summary"],
+        cited_sources=["company.txt"],
+        retrieved_chunk_ids=["chunk_summary"],
+        token_usage=TokenUsage(
+            model_calls=2,
+            usage_available_calls=2,
+            prompt_tokens=80,
+            completion_tokens=20,
+            total_tokens=100,
+            estimated_cost_usd=0.002,
+        ),
     )
 
     repository.save(record)
@@ -345,6 +389,11 @@ def test_evaluation_summary(
     assert summary["human_transfer_rate"] == 0.0
     assert summary["helpful_rate"] == 100.0
     assert summary["average_duration_ms"] == 1000.0
+    assert summary["tool_success_rate"] == 100.0
+    assert summary["citation_validity_rate"] == 100.0
+    assert summary["token_usage_coverage_rate"] == 100.0
+    assert summary["total_tokens"] == 100
+    assert summary["estimated_cost_usd"] == 0.002
 
     assert summary["intent_distribution"] == {
         "knowledge_query": 1

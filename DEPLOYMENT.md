@@ -47,6 +47,8 @@ openssl rand -hex 32
 LLM_API_KEY=大模型服务密钥
 LLM_BASE_URL=大模型服务地址
 LLM_MODEL_NAME=模型名称
+LLM_INPUT_COST_PER_1M_TOKENS=输入每百万Token美元单价
+LLM_OUTPUT_COST_PER_1M_TOKENS=输出每百万Token美元单价
 
 SERVICE_API_KEY=一段独立的64位随机字符串
 POSTGRES_PASSWORD=另一段独立的64位随机字符串
@@ -108,7 +110,18 @@ curl http://127.0.0.1:8000/metrics \
   -H "X-API-Key: 你的SERVICE_API_KEY"
 ```
 
-Agent会把意图、召回片段、工具调用、答案、耗时和用户反馈写入PostgreSQL。Redis故障时检索会自动绕过缓存，缓存故障不会伪装成业务执行成功。
+提交一次真实用户反馈：
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/feedback \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: 你的SERVICE_API_KEY" \
+  -d '{"request_id":"聊天接口返回的request_id","feedback":1}'
+```
+
+`feedback`只能为`1`（有帮助）或`-1`（无帮助），不存在的`request_id`会返回404。
+
+Agent会把意图、召回片段、引用来源、工具调用、答案、耗时、Token、估算成本和用户反馈写入PostgreSQL。`/metrics`中的进程指标适合观察当前实例，`evaluation`字段是数据库累计指标，适合多个实例共享统计。Redis故障时检索会自动绕过缓存，缓存故障不会伪装成业务执行成功。
 
 ## 五、知识更新与删除
 
@@ -181,3 +194,44 @@ docker compose down
 - 是否把Embedding/Rerank迁移到GPU推理服务。
 
 不要简单增加Uvicorn worker：每个worker都会单独加载Embedding和Rerank模型。更合理的扩容方式是用多个容器副本配合负载均衡，并把并发上限建立在压测数据上。
+
+在测试机上启动服务后执行：
+
+```bash
+export SERVICE_API_KEY="你的服务API Key"
+python tests/load_test.py \
+  --base-url http://127.0.0.1:8000 \
+  --concurrency 100 \
+  --requests 200 \
+  --confirm-real-llm-cost
+```
+
+脚本会生成`data/load_test_report.json`，至少检查：
+
+- 成功率是否达到预期；
+- P95/P99是否低于业务超时；
+- 是否出现429、504或连接错误；
+- PostgreSQL连接数、容器CPU与内存是否达到瓶颈；
+- 大模型服务的并发和Token限额是否触发。
+
+压测请求会调用真实模型并产生费用。不要把本地Mock测试结果当作生产容量结论。
+
+## 九、数据库迁移与发布验收
+
+每次发布前先在备份或临时数据库验证迁移：
+
+```bash
+python -m alembic upgrade head
+python -m alembic current
+```
+
+当前`20260728_0002`迁移新增了Token/成本字段、完整工具调用和引用记录。应用启动后完成以下验收：
+
+```bash
+curl http://127.0.0.1:8000/health/ready
+curl http://127.0.0.1:8000/metrics \
+  -H "X-API-Key: 你的SERVICE_API_KEY"
+docker compose logs --tail=200 customer-service-agent
+```
+
+确认一次知识问答、一次转人工、一次正向反馈均成功，再把镜像版本和评测报告记录为本次发布基线。

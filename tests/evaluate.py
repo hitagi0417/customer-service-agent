@@ -17,6 +17,7 @@ if str(PROJECT_ROOT_PATH) not in sys.path:
 
 from app.agent import create_customer_service_agent
 from app.config import PROJECT_ROOT, settings
+from app.database import dispose_database_engines
 from app.schemas import IntentType
 
 
@@ -198,12 +199,41 @@ def run_evaluation(
 
     pipeline_success_count = 0
     auto_resolved_count = 0
+    human_transfer_count = 0
+
+    tool_call_count = 0
+    tool_success_count = 0
+    tool_duration_total_ms = 0.0
+    tool_distribution: dict[
+        str,
+        dict[str, int | float],
+    ] = {}
+
+    model_calls = 0
+    usage_available_calls = 0
+    prompt_tokens = 0
+    completion_tokens = 0
+    total_tokens = 0
+    cached_prompt_tokens = 0
+    estimated_cost_usd = 0.0
+
+    citation_case_correct = 0
+    citation_case_total = 0
+    citation_count = 0
+    correct_citation_count = 0
+    required_citation_source_count = 0
+    cited_required_source_count = 0
+    citation_id_count = 0
+    valid_citation_id_count = 0
+
     category_totals: dict[str, int] = {}
     category_passed: dict[str, int] = {}
 
     try:
         # 使用临时数据库，避免评测数据污染正式数据库
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with tempfile.TemporaryDirectory(
+            ignore_cleanup_errors=True,
+        ) as temp_dir:
             temporary_database = (
                 Path(temp_dir)
                 / "evaluation.db"
@@ -246,6 +276,54 @@ def run_evaluation(
 
                     durations.append(
                         response.total_duration_ms
+                    )
+                    if response.need_human:
+                        human_transfer_count += 1
+
+                    for tool_call in response.tool_calls:
+                        tool_call_count += 1
+                        tool_duration_total_ms += (
+                            tool_call.duration_ms
+                        )
+
+                        if tool_call.success:
+                            tool_success_count += 1
+
+                        tool_stats = (
+                            tool_distribution.setdefault(
+                                tool_call.tool_name,
+                                {
+                                    "call_count": 0,
+                                    "success_count": 0,
+                                    "duration_ms": 0.0,
+                                },
+                            )
+                        )
+                        tool_stats["call_count"] += 1
+                        tool_stats["duration_ms"] += (
+                            tool_call.duration_ms
+                        )
+
+                        if tool_call.success:
+                            tool_stats[
+                                "success_count"
+                            ] += 1
+
+                    usage = response.token_usage
+                    model_calls += usage.model_calls
+                    usage_available_calls += (
+                        usage.usage_available_calls
+                    )
+                    prompt_tokens += usage.prompt_tokens
+                    completion_tokens += (
+                        usage.completion_tokens
+                    )
+                    total_tokens += usage.total_tokens
+                    cached_prompt_tokens += (
+                        usage.cached_prompt_tokens
+                    )
+                    estimated_cost_usd += (
+                        usage.estimated_cost_usd
                     )
 
                     # 1. 检查意图
@@ -309,6 +387,14 @@ def run_evaluation(
                     ) = None
 
                     retrieved_sources: list[str] = []
+                    cited_sources = [
+                        source.source
+                        for source in response.sources
+                    ]
+                    cited_chunk_ids = [
+                        source.chunk_id
+                        for source in response.sources
+                    ]
 
                     if (
                         case.expected_intent
@@ -353,6 +439,49 @@ def run_evaluation(
                                     f"{required_sources}，"
                                     f"实际来源="
                                     f"{retrieved_sources}"
+                                )
+
+                            citation_case_total += 1
+                            expected_source_set = set(
+                                required_sources
+                            )
+                            cited_source_set = set(
+                                cited_sources
+                            )
+                            correct_citations = [
+                                source
+                                for source in cited_sources
+                                if source
+                                in expected_source_set
+                            ]
+                            citation_count += len(
+                                cited_sources
+                            )
+                            correct_citation_count += len(
+                                correct_citations
+                            )
+                            required_citation_source_count += (
+                                len(expected_source_set)
+                            )
+                            cited_required_source_count += len(
+                                expected_source_set
+                                & cited_source_set
+                            )
+                            citation_is_correct = (
+                                bool(cited_sources)
+                                and cited_source_set
+                                <= expected_source_set
+                                and expected_source_set
+                                <= cited_source_set
+                            )
+
+                            if citation_is_correct:
+                                citation_case_correct += 1
+                            else:
+                                case_failures.append(
+                                    "引用来源错误："
+                                    f"期望={required_sources}，"
+                                    f"实际={cited_sources}"
                                 )
 
                         else:
@@ -407,6 +536,37 @@ def run_evaluation(
                     case_passed = (
                         len(case_failures) == 0
                     )
+
+                    if evaluation_record:
+                        retrieved_id_set = set(
+                            evaluation_record
+                            .retrieved_chunk_ids
+                        )
+                        citation_id_count += len(
+                            evaluation_record
+                            .cited_chunk_ids
+                        )
+                        valid_ids = [
+                            chunk_id
+                            for chunk_id
+                            in evaluation_record
+                            .cited_chunk_ids
+                            if chunk_id in retrieved_id_set
+                        ]
+                        valid_citation_id_count += len(
+                            valid_ids
+                        )
+
+                        if (
+                            len(valid_ids)
+                            != len(
+                                evaluation_record
+                                .cited_chunk_ids
+                            )
+                        ):
+                            case_failures.append(
+                                "引用了未召回的知识片段"
+                            )
                     category_totals[case.category] = (
                         category_totals.get(
                             case.category,
@@ -452,6 +612,30 @@ def run_evaluation(
                         ),
                         "retrieved_sources": (
                             retrieved_sources
+                        ),
+                        "cited_sources": cited_sources,
+                        "cited_chunk_ids": (
+                            cited_chunk_ids
+                        ),
+                        "tool_calls": [
+                            {
+                                "tool_name": (
+                                    tool_call.tool_name
+                                ),
+                                "success": (
+                                    tool_call.success
+                                ),
+                                "duration_ms": (
+                                    tool_call.duration_ms
+                                ),
+                                "error": tool_call.error,
+                            }
+                            for tool_call
+                            in response.tool_calls
+                        ],
+                        "token_usage": (
+                            response.token_usage
+                            .model_dump(mode="json")
                         ),
                         "answer": response.answer,
                         "duration_ms": (
@@ -499,6 +683,11 @@ def run_evaluation(
                         f"{type(error).__name__}: "
                         f"{error}"
                     )
+
+            # Windows 不允许删除仍被连接池占用的 SQLite 文件。
+            # 评测结束后主动释放引擎，避免临时目录清理时报
+            # PermissionError。
+            dispose_database_engines()
 
     finally:
         # 恢复正式数据库路径
@@ -565,6 +754,53 @@ def run_evaluation(
                 )
             ),
 
+            "answer_accuracy": calculate_rate(
+                keyword_correct,
+                keyword_total,
+            ),
+
+            "citation_precision": calculate_rate(
+                correct_citation_count,
+                citation_count,
+            ),
+
+            "citation_source_recall": calculate_rate(
+                cited_required_source_count,
+                required_citation_source_count,
+            ),
+
+            "citation_case_accuracy": calculate_rate(
+                citation_case_correct,
+                citation_case_total,
+            ),
+
+            "citation_id_validity_rate": (
+                calculate_rate(
+                    valid_citation_id_count,
+                    citation_id_count,
+                )
+            ),
+
+            "tool_success_rate": calculate_rate(
+                tool_success_count,
+                tool_call_count,
+            ),
+
+            "average_tool_duration_ms": round(
+                (
+                    tool_duration_total_ms
+                    / tool_call_count
+                )
+                if tool_call_count
+                else 0.0,
+                2,
+            ),
+
+            "human_transfer_rate": calculate_rate(
+                human_transfer_count,
+                total_count,
+            ),
+
             "pipeline_success_rate": (
                 calculate_rate(
                     pipeline_success_count,
@@ -589,6 +825,61 @@ def run_evaluation(
             "p95_duration_ms": calculate_p95(
                 durations
             ),
+
+            "model_calls": model_calls,
+
+            "token_usage_coverage_rate": (
+                calculate_rate(
+                    usage_available_calls,
+                    model_calls,
+                )
+            ),
+
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+            "cached_prompt_tokens": (
+                cached_prompt_tokens
+            ),
+            "average_tokens_per_request": round(
+                (
+                    total_tokens
+                    / total_count
+                )
+                if total_count
+                else 0.0,
+                2,
+            ),
+            "estimated_cost_usd": round(
+                estimated_cost_usd,
+                8,
+            ),
+
+            "tool_distribution": {
+                tool_name: {
+                    "call_count": int(
+                        stats["call_count"]
+                    ),
+                    "success_count": int(
+                        stats["success_count"]
+                    ),
+                    "success_rate": calculate_rate(
+                        int(stats["success_count"]),
+                        int(stats["call_count"]),
+                    ),
+                    "average_duration_ms": round(
+                        (
+                            float(stats["duration_ms"])
+                            / int(stats["call_count"])
+                        ),
+                        2,
+                    ),
+                }
+                for tool_name, stats
+                in sorted(
+                    tool_distribution.items()
+                )
+            },
 
             "category_accuracy": {
                 category: calculate_rate(
@@ -615,6 +906,32 @@ def run_evaluation(
             ),
             "keyword_correct": keyword_correct,
             "keyword_total": keyword_total,
+            "citation_case_correct": (
+                citation_case_correct
+            ),
+            "citation_case_total": (
+                citation_case_total
+            ),
+            "correct_citation_count": (
+                correct_citation_count
+            ),
+            "citation_count": citation_count,
+            "valid_citation_id_count": (
+                valid_citation_id_count
+            ),
+            "citation_id_count": (
+                citation_id_count
+            ),
+            "tool_success_count": (
+                tool_success_count
+            ),
+            "tool_call_count": tool_call_count,
+            "human_transfer_count": (
+                human_transfer_count
+            ),
+            "usage_available_calls": (
+                usage_available_calls
+            ),
             "failure_count": len(failures),
         },
 
@@ -669,6 +986,16 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "--case-id",
+        action="append",
+        default=None,
+        help=(
+            "只运行指定id的评测题；"
+            "需要多题时可重复传入"
+        ),
+    )
+
+    parser.add_argument(
         "--output",
         type=Path,
         default=(
@@ -688,6 +1015,32 @@ def main() -> None:
     )
 
     cases = load_eval_cases(eval_path)
+
+    if arguments.case_id:
+        requested_case_ids = set(
+            arguments.case_id
+        )
+        known_case_ids = {
+            case.id
+            for case in cases
+        }
+        unknown_case_ids = (
+            requested_case_ids - known_case_ids
+        )
+
+        if unknown_case_ids:
+            raise ValueError(
+                "评测题id不存在："
+                + ", ".join(
+                    sorted(unknown_case_ids)
+                )
+            )
+
+        cases = [
+            case
+            for case in cases
+            if case.id in requested_case_ids
+        ]
 
     if arguments.limit is not None:
         if arguments.limit <= 0:

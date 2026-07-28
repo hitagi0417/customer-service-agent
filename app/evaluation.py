@@ -6,7 +6,9 @@ from sqlalchemy import (
     Integer,
     case,
     cast,
+    delete,
     func,
+    insert,
     select,
     update,
 )
@@ -17,9 +19,11 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from app.database import (
     database_transaction,
+    citation_records,
     evaluation_records,
     get_engine,
     initialize_database,
+    tool_execution_records,
 )
 from app.schemas import EvaluationRecord, IntentType
 
@@ -59,6 +63,38 @@ class EvaluationRepository:
             ),
             "retrieval_scores": record.retrieval_scores,
             "tool_names": record.tool_names,
+            "tool_calls": [
+                tool_call.model_dump(mode="json")
+                for tool_call in record.tool_calls
+            ],
+            "cited_chunk_ids": (
+                record.cited_chunk_ids
+            ),
+            "cited_sources": record.cited_sources,
+            "model_calls": (
+                record.token_usage.model_calls
+            ),
+            "usage_available_calls": (
+                record.token_usage
+                .usage_available_calls
+            ),
+            "prompt_tokens": (
+                record.token_usage.prompt_tokens
+            ),
+            "completion_tokens": (
+                record.token_usage.completion_tokens
+            ),
+            "total_tokens": (
+                record.token_usage.total_tokens
+            ),
+            "cached_prompt_tokens": (
+                record.token_usage
+                .cached_prompt_tokens
+            ),
+            "estimated_cost_usd": (
+                record.token_usage
+                .estimated_cost_usd
+            ),
             "answer": record.answer,
             "need_human": record.need_human,
             "success": record.success,
@@ -101,6 +137,74 @@ class EvaluationRepository:
 
         with database_transaction() as connection:
             connection.execute(statement)
+            connection.execute(
+                delete(tool_execution_records).where(
+                    tool_execution_records.c.request_id
+                    == record.request_id
+                )
+            )
+            connection.execute(
+                delete(citation_records).where(
+                    citation_records.c.request_id
+                    == record.request_id
+                )
+            )
+
+            if record.tool_calls:
+                connection.execute(
+                    insert(tool_execution_records),
+                    [
+                        {
+                            "tool_call_id": (
+                                f"{record.request_id}:tool:{index}"
+                            ),
+                            "request_id": record.request_id,
+                            "call_index": index,
+                            "tool_name": tool_call.tool_name,
+                            "success": tool_call.success,
+                            "duration_ms": (
+                                tool_call.duration_ms
+                            ),
+                            "error": tool_call.error,
+                        }
+                        for index, tool_call in enumerate(
+                            record.tool_calls
+                        )
+                    ],
+                )
+
+            if record.cited_chunk_ids:
+                retrieved_ids = set(
+                    record.retrieved_chunk_ids
+                )
+                connection.execute(
+                    insert(citation_records),
+                    [
+                        {
+                            "citation_id": (
+                                f"{record.request_id}:"
+                                f"citation:{index}"
+                            ),
+                            "request_id": record.request_id,
+                            "citation_index": index,
+                            "chunk_id": chunk_id,
+                            "source": source,
+                            "is_retrieved": (
+                                chunk_id in retrieved_ids
+                            ),
+                        }
+                        for index, (
+                            chunk_id,
+                            source,
+                        ) in enumerate(
+                            zip(
+                                record.cited_chunk_ids,
+                                record.cited_sources,
+                                strict=True,
+                            )
+                        )
+                    ],
+                )
 
     def get(
         self,
@@ -223,6 +327,27 @@ class EvaluationRepository:
                 )
                 * 100
             ).label("helpful_rate"),
+            func.sum(
+                evaluation_records.c.model_calls
+            ).label("model_calls"),
+            func.sum(
+                evaluation_records.c.usage_available_calls
+            ).label("usage_available_calls"),
+            func.sum(
+                evaluation_records.c.prompt_tokens
+            ).label("prompt_tokens"),
+            func.sum(
+                evaluation_records.c.completion_tokens
+            ).label("completion_tokens"),
+            func.sum(
+                evaluation_records.c.total_tokens
+            ).label("total_tokens"),
+            func.sum(
+                evaluation_records.c.cached_prompt_tokens
+            ).label("cached_prompt_tokens"),
+            func.sum(
+                evaluation_records.c.estimated_cost_usd
+            ).label("estimated_cost_usd"),
         )
         intent_statement = (
             select(
@@ -236,6 +361,45 @@ class EvaluationRepository:
                 evaluation_records.c.predicted_intent
             )
         )
+        tool_summary_statement = select(
+            func.count().label("tool_call_count"),
+            func.sum(
+                cast(
+                    tool_execution_records.c.success,
+                    Integer,
+                )
+            ).label("tool_success_count"),
+            func.avg(
+                tool_execution_records.c.duration_ms
+            ).label("average_tool_duration_ms"),
+        )
+        tool_distribution_statement = (
+            select(
+                tool_execution_records.c.tool_name,
+                func.count().label("call_count"),
+                func.sum(
+                    cast(
+                        tool_execution_records.c.success,
+                        Integer,
+                    )
+                ).label("success_count"),
+            )
+            .group_by(
+                tool_execution_records.c.tool_name
+            )
+            .order_by(
+                tool_execution_records.c.tool_name
+            )
+        )
+        citation_summary_statement = select(
+            func.count().label("citation_count"),
+            func.sum(
+                cast(
+                    citation_records.c.is_retrieved,
+                    Integer,
+                )
+            ).label("valid_citation_count"),
+        )
 
         with get_engine().connect() as connection:
             summary = (
@@ -248,29 +412,173 @@ class EvaluationRepository:
                 .mappings()
                 .all()
             )
+            tool_summary = (
+                connection.execute(
+                    tool_summary_statement
+                )
+                .mappings()
+                .one()
+            )
+            tool_distribution = (
+                connection.execute(
+                    tool_distribution_statement
+                )
+                .mappings()
+                .all()
+            )
+            citation_summary = (
+                connection.execute(
+                    citation_summary_statement
+                )
+                .mappings()
+                .one()
+            )
+
+        tool_call_count = (
+            tool_summary["tool_call_count"] or 0
+        )
+        tool_success_count = (
+            tool_summary["tool_success_count"] or 0
+        )
+        citation_count = (
+            citation_summary["citation_count"] or 0
+        )
+        valid_citation_count = (
+            citation_summary["valid_citation_count"]
+            or 0
+        )
+        model_calls = summary["model_calls"] or 0
+        usage_available_calls = (
+            summary["usage_available_calls"] or 0
+        )
+        total_count = summary["total_count"] or 0
 
         return {
-            "total_count": summary["total_count"] or 0,
+            "total_count": total_count,
             "success_rate": round(
-                summary["success_rate"] or 0.0,
+                float(
+                    summary["success_rate"] or 0.0
+                ),
                 2,
             ),
             "human_transfer_rate": round(
-                summary["human_transfer_rate"] or 0.0,
+                float(
+                    summary["human_transfer_rate"]
+                    or 0.0
+                ),
                 2,
             ),
             "auto_resolution_rate": round(
-                summary["auto_resolution_rate"] or 0.0,
+                float(
+                    summary["auto_resolution_rate"]
+                    or 0.0
+                ),
                 2,
             ),
             "average_duration_ms": round(
-                summary["average_duration_ms"] or 0.0,
+                float(
+                    summary["average_duration_ms"]
+                    or 0.0
+                ),
                 2,
             ),
             "rated_count": summary["rated_count"] or 0,
             "helpful_rate": round(
-                summary["helpful_rate"] or 0.0,
+                float(
+                    summary["helpful_rate"] or 0.0
+                ),
                 2,
+            ),
+            "tool_call_count": tool_call_count,
+            "tool_success_count": tool_success_count,
+            "tool_success_rate": round(
+                (
+                    tool_success_count
+                    / tool_call_count
+                    * 100
+                )
+                if tool_call_count
+                else 0.0,
+                2,
+            ),
+            "average_tool_duration_ms": round(
+                float(
+                    tool_summary[
+                        "average_tool_duration_ms"
+                    ]
+                    or 0.0
+                ),
+                2,
+            ),
+            "tool_distribution": {
+                row["tool_name"]: {
+                    "call_count": row["call_count"],
+                    "success_count": (
+                        row["success_count"] or 0
+                    ),
+                    "success_rate": round(
+                        (
+                            (row["success_count"] or 0)
+                            / row["call_count"]
+                            * 100
+                        ),
+                        2,
+                    ),
+                }
+                for row in tool_distribution
+            },
+            "citation_count": citation_count,
+            "valid_citation_count": (
+                valid_citation_count
+            ),
+            "citation_validity_rate": round(
+                (
+                    valid_citation_count
+                    / citation_count
+                    * 100
+                )
+                if citation_count
+                else 0.0,
+                2,
+            ),
+            "model_calls": model_calls,
+            "usage_available_calls": (
+                usage_available_calls
+            ),
+            "token_usage_coverage_rate": round(
+                (
+                    usage_available_calls
+                    / model_calls
+                    * 100
+                )
+                if model_calls
+                else 0.0,
+                2,
+            ),
+            "prompt_tokens": (
+                summary["prompt_tokens"] or 0
+            ),
+            "completion_tokens": (
+                summary["completion_tokens"] or 0
+            ),
+            "total_tokens": (
+                summary["total_tokens"] or 0
+            ),
+            "cached_prompt_tokens": (
+                summary["cached_prompt_tokens"] or 0
+            ),
+            "average_tokens_per_request": round(
+                (
+                    (summary["total_tokens"] or 0)
+                    / total_count
+                )
+                if total_count
+                else 0.0,
+                2,
+            ),
+            "estimated_cost_usd": round(
+                summary["estimated_cost_usd"] or 0.0,
+                8,
             ),
             "intent_distribution": {
                 row["predicted_intent"]: (
@@ -305,6 +613,32 @@ class EvaluationRepository:
             tool_names=self._decode_json_list(
                 row["tool_names"]
             ),
+            tool_calls=self._decode_json_list(
+                row["tool_calls"]
+            ),
+            cited_chunk_ids=self._decode_json_list(
+                row["cited_chunk_ids"]
+            ),
+            cited_sources=self._decode_json_list(
+                row["cited_sources"]
+            ),
+            token_usage={
+                "model_calls": row["model_calls"],
+                "usage_available_calls": (
+                    row["usage_available_calls"]
+                ),
+                "prompt_tokens": row["prompt_tokens"],
+                "completion_tokens": (
+                    row["completion_tokens"]
+                ),
+                "total_tokens": row["total_tokens"],
+                "cached_prompt_tokens": (
+                    row["cached_prompt_tokens"]
+                ),
+                "estimated_cost_usd": (
+                    row["estimated_cost_usd"]
+                ),
+            },
             answer=row["answer"],
             need_human=bool(row["need_human"]),
             success=bool(row["success"]),
