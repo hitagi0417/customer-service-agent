@@ -89,6 +89,8 @@ class Settings:
     llm_api_key: str
     llm_base_url: str | None
     llm_model_name: str
+    llm_input_cost_per_million_tokens: float
+    llm_output_cost_per_million_tokens: float
 
     # 向量模型配置
     embedding_model_name: str
@@ -96,7 +98,20 @@ class Settings:
     # 项目路径
     knowledge_dir: Path
     database_path: Path
+    database_url: str | None
     ingestion_report_path: Path
+
+    # 生产级基础设施
+    database_pool_size: int
+    database_max_overflow: int
+    vector_store_backend: str
+    qdrant_url: str | None
+    qdrant_api_key: str | None
+    qdrant_collection: str
+    qdrant_timeout_seconds: float
+    enable_retrieval_cache: bool
+    redis_url: str | None
+    retrieval_cache_ttl_seconds: int
 
     # API服务配置
     app_env: str
@@ -128,6 +143,14 @@ class Settings:
     def __post_init__(self) -> None:
         if self.chunk_size <= 0:
             raise ValueError("CHUNK_SIZE必须大于0")
+        if self.llm_input_cost_per_million_tokens < 0:
+            raise ValueError(
+                "LLM_INPUT_COST_PER_1M_TOKENS不能小于0"
+            )
+        if self.llm_output_cost_per_million_tokens < 0:
+            raise ValueError(
+                "LLM_OUTPUT_COST_PER_1M_TOKENS不能小于0"
+            )
         if self.chunk_overlap < 0:
             raise ValueError("CHUNK_OVERLAP不能小于0")
         if self.chunk_overlap >= self.chunk_size:
@@ -158,6 +181,38 @@ class Settings:
         if self.api_request_timeout_seconds <= 0:
             raise ValueError(
                 "API_REQUEST_TIMEOUT_SECONDS必须大于0"
+            )
+        if self.database_pool_size <= 0:
+            raise ValueError("DATABASE_POOL_SIZE必须大于0")
+        if self.database_max_overflow < 0:
+            raise ValueError(
+                "DATABASE_MAX_OVERFLOW不能小于0"
+            )
+        if self.vector_store_backend not in {
+            "memory",
+            "qdrant",
+        }:
+            raise ValueError(
+                "VECTOR_STORE_BACKEND必须是memory或qdrant"
+            )
+        if (
+            self.vector_store_backend == "qdrant"
+            and not self.qdrant_url
+        ):
+            raise ValueError(
+                "使用Qdrant时必须配置QDRANT_URL"
+            )
+        if self.qdrant_timeout_seconds <= 0:
+            raise ValueError(
+                "QDRANT_TIMEOUT_SECONDS必须大于0"
+            )
+        if self.enable_retrieval_cache and not self.redis_url:
+            raise ValueError(
+                "启用检索缓存时必须配置REDIS_URL"
+            )
+        if self.retrieval_cache_ttl_seconds <= 0:
+            raise ValueError(
+                "RETRIEVAL_CACHE_TTL_SECONDS必须大于0"
             )
         if self.rag_top_k <= 0:
             raise ValueError("RAG_TOP_K必须大于0")
@@ -199,9 +254,40 @@ class Settings:
             "llm_api_key_exists": bool(self.llm_api_key),
             "llm_base_url_configured": bool(self.llm_base_url),
             "llm_model_name": self.llm_model_name,
+            "llm_input_cost_per_million_tokens": (
+                self.llm_input_cost_per_million_tokens
+            ),
+            "llm_output_cost_per_million_tokens": (
+                self.llm_output_cost_per_million_tokens
+            ),
             "embedding_model_name": self.embedding_model_name,
             "knowledge_dir": str(self.knowledge_dir),
             "database_path": str(self.database_path),
+            "database_url_configured": bool(
+                self.database_url
+            ),
+            "database_pool_size": self.database_pool_size,
+            "database_max_overflow": (
+                self.database_max_overflow
+            ),
+            "vector_store_backend": (
+                self.vector_store_backend
+            ),
+            "qdrant_url_configured": bool(self.qdrant_url),
+            "qdrant_api_key_exists": bool(
+                self.qdrant_api_key
+            ),
+            "qdrant_collection": self.qdrant_collection,
+            "qdrant_timeout_seconds": (
+                self.qdrant_timeout_seconds
+            ),
+            "enable_retrieval_cache": (
+                self.enable_retrieval_cache
+            ),
+            "redis_url_configured": bool(self.redis_url),
+            "retrieval_cache_ttl_seconds": (
+                self.retrieval_cache_ttl_seconds
+            ),
             "ingestion_report_path": str(
                 self.ingestion_report_path
             ),
@@ -254,6 +340,20 @@ settings = Settings(
 
     llm_model_name=get_required_env("LLM_MODEL_NAME"),
 
+    llm_input_cost_per_million_tokens=float(
+        os.getenv(
+            "LLM_INPUT_COST_PER_1M_TOKENS",
+            "0",
+        )
+    ),
+
+    llm_output_cost_per_million_tokens=float(
+        os.getenv(
+            "LLM_OUTPUT_COST_PER_1M_TOKENS",
+            "0",
+        )
+    ),
+
     embedding_model_name=os.getenv(
         "EMBEDDING_MODEL_NAME",
         "BAAI/bge-small-zh-v1.5",
@@ -269,9 +369,53 @@ settings = Settings(
         PROJECT_ROOT / "data" / "customer_service.db",
     ),
 
+    database_url=(
+        os.getenv("DATABASE_URL") or None
+    ),
+
     ingestion_report_path=get_project_path_env(
         "INGESTION_REPORT_PATH",
         PROJECT_ROOT / "data" / "ingestion_report.json",
+    ),
+
+    database_pool_size=int(
+        os.getenv("DATABASE_POOL_SIZE", "5")
+    ),
+
+    database_max_overflow=int(
+        os.getenv("DATABASE_MAX_OVERFLOW", "10")
+    ),
+
+    vector_store_backend=os.getenv(
+        "VECTOR_STORE_BACKEND",
+        "memory",
+    ).strip().lower(),
+
+    qdrant_url=os.getenv("QDRANT_URL") or None,
+
+    qdrant_api_key=os.getenv("QDRANT_API_KEY") or None,
+
+    qdrant_collection=os.getenv(
+        "QDRANT_COLLECTION",
+        "customer_service_knowledge",
+    ).strip(),
+
+    qdrant_timeout_seconds=float(
+        os.getenv("QDRANT_TIMEOUT_SECONDS", "10")
+    ),
+
+    enable_retrieval_cache=get_bool_env(
+        "ENABLE_RETRIEVAL_CACHE",
+        default=False,
+    ),
+
+    redis_url=os.getenv("REDIS_URL") or None,
+
+    retrieval_cache_ttl_seconds=int(
+        os.getenv(
+            "RETRIEVAL_CACHE_TTL_SECONDS",
+            "300",
+        )
     ),
 
     app_env=os.getenv(

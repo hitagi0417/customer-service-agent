@@ -1,77 +1,100 @@
 # 智能客服 Agent 部署指南
 
-项目采用“一容器一进程”的部署方式。Embedding 和 Rerank 模型只在应用启动时加载一次；SQLite、评测记录和工单数据保存在 Docker 数据卷中。
+生产形态由五个组件组成：
+
+```text
+Nginx / Caddy
+      ↓
+FastAPI Agent
+  ├─ PostgreSQL：工单与评测数据
+  ├─ Qdrant：持久化知识向量
+  ├─ Redis：检索结果缓存
+  └─ 大模型API：意图识别与受约束回答
+```
+
+SQLite和内存向量索引只用于本地开发与测试，不再承担多实例生产数据。
 
 ## 一、部署前准备
 
-建议服务器至少满足：
+建议演示服务器至少满足：
 
 - Linux x86_64；
-- 4 核 CPU；
-- 8 GB 内存；
-- 20 GB 可用磁盘；
-- 已安装 Docker Engine 和 Docker Compose；
-- 安全组只开放 `22`、`80`、`443`，不要直接向公网开放 `8000`。
+- 4核CPU、8GB内存、20GB可用磁盘；
+- Docker Engine与Docker Compose；
+- 安全组只开放`22`、`80`和`443`。
 
-首次启动需要从 Hugging Face 下载 Embedding 和 Rerank 模型，所以耗时会明显长于后续启动。
+Compose中的`8000`、`5432`、`6333`、`6379`都只绑定`127.0.0.1`，不会直接暴露到公网。
+
+首次启动需要下载Embedding和Rerank模型，耗时会明显长于后续启动。
 
 ## 二、配置生产环境
 
-先复制环境变量模板：
+复制模板：
 
 ```bash
 cp .env.example .env
 ```
 
-生成 API 访问密钥：
+生成只包含URL安全字符的随机密钥：
 
 ```bash
 openssl rand -hex 32
 ```
 
-编辑 `.env`，至少正确填写：
+至少填写：
 
 ```dotenv
-LLM_API_KEY=大模型服务的密钥
+LLM_API_KEY=大模型服务密钥
 LLM_BASE_URL=大模型服务地址
 LLM_MODEL_NAME=模型名称
+LLM_INPUT_COST_PER_1M_TOKENS=输入每百万Token美元单价
+LLM_OUTPUT_COST_PER_1M_TOKENS=输出每百万Token美元单价
 
-SERVICE_API_KEY=刚才生成的64位随机字符串
-API_MAX_CONCURRENCY=1
-API_REQUEST_TIMEOUT_SECONDS=60
+SERVICE_API_KEY=一段独立的64位随机字符串
+POSTGRES_PASSWORD=另一段独立的64位随机字符串
 ```
 
-`SERVICE_API_KEY` 是调用本项目 HTTP API 的密钥，不是大模型密钥。生产模式如果缺少它，服务会拒绝启动。
+不要让`SERVICE_API_KEY`、`POSTGRES_PASSWORD`和大模型密钥复用。`.env`已被Git忽略，不能提交到仓库。
 
-## 三、启动 Docker 服务
+容器内会自动使用：
 
-在项目根目录执行：
+```dotenv
+DATABASE_URL=postgresql+psycopg://agent:密码@postgres:5432/customer_service
+VECTOR_STORE_BACKEND=qdrant
+QDRANT_URL=http://qdrant:6333
+ENABLE_RETRIEVAL_CACHE=true
+REDIS_URL=redis://redis:6379/0
+```
+
+## 三、启动与检查
+
+构建并启动完整服务：
 
 ```bash
 docker compose up -d --build
+docker compose ps
 ```
 
-查看启动日志：
+应用容器启动前会先执行`alembic upgrade head`，数据库结构变化因此有明确版本，而不是靠运行时手工改表。
+
+查看应用日志：
 
 ```bash
 docker compose logs -f customer-service-agent
 ```
 
-看到服务启动完成后，检查健康状态：
+首次入库日志会显示Qdrant新增的片段数。知识未变化时再次启动，新增或更新数应为`0`。
+
+检查存活和就绪状态：
 
 ```bash
 curl http://127.0.0.1:8000/health/live
 curl http://127.0.0.1:8000/health/ready
 ```
 
-预期分别返回：
+`live`只说明进程还活着；`ready`还会确认Agent已经加载、PostgreSQL可查询、Qdrant集合可访问。
 
-```json
-{"status":"alive"}
-{"status":"ready"}
-```
-
-## 四、调用客服接口
+## 四、调用接口
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/chat \
@@ -80,26 +103,47 @@ curl -X POST http://127.0.0.1:8000/api/chat \
   -d '{"question":"商品签收后几天内可以退货？","conversation_id":"demo-001"}'
 ```
 
-查看本进程的基础运行指标：
+查看进程指标：
 
 ```bash
 curl http://127.0.0.1:8000/metrics \
   -H "X-API-Key: 你的SERVICE_API_KEY"
 ```
 
-指标包括总请求数、成功数、失败数、超时数、平均耗时和运行时间。Agent 自身仍会把意图、召回片段、工具调用、答案和耗时记录到 SQLite 评测表中。
+提交一次真实用户反馈：
 
-## 五、配置域名与 HTTPS
+```bash
+curl -X POST http://127.0.0.1:8000/api/feedback \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: 你的SERVICE_API_KEY" \
+  -d '{"request_id":"聊天接口返回的request_id","feedback":1}'
+```
 
-生产环境应在容器前放置 Nginx 或 Caddy，由反向代理负责：
+`feedback`只能为`1`（有帮助）或`-1`（无帮助），不存在的`request_id`会返回404。
 
-- 绑定域名；
-- 自动签发和续期 HTTPS 证书；
-- 限制请求体大小；
-- 设置访问日志和限流；
-- 把请求转发到 `127.0.0.1:8000`。
+Agent会把意图、召回片段、引用来源、工具调用、答案、耗时、Token、估算成本和用户反馈写入PostgreSQL。`/metrics`中的进程指标适合观察当前实例，`evaluation`字段是数据库累计指标，适合多个实例共享统计。Redis故障时检索会自动绕过缓存，缓存故障不会伪装成业务执行成功。
 
-最小 Nginx 转发配置：
+## 五、知识更新与删除
+
+修改`knowledge/`后重新构建应用：
+
+```bash
+docker compose up -d --build customer-service-agent
+docker compose logs --tail=100 customer-service-agent
+```
+
+同步规则：
+
+1. 新`chunk_id`：生成Embedding并写入Qdrant；
+2. `content_hash`或Embedding模型变化：重新编码并覆盖；
+3. 文档删除导致`chunk_id`消失：删除对应Qdrant点；
+4. 知识集合变化：Redis缓存Key中的知识指纹变化，旧缓存自然失效。
+
+如果更换Embedding模型后向量维度发生变化，应设置新的`QDRANT_COLLECTION`，确认新集合评测通过后再删除旧集合，避免误删可回滚数据。
+
+## 六、域名与HTTPS
+
+生产环境应在容器前放置Nginx或Caddy，负责HTTPS、访问日志、请求大小限制和限流。最小Nginx转发示例：
 
 ```nginx
 server {
@@ -117,22 +161,9 @@ server {
 }
 ```
 
-正式上线时再用 Certbot 或 Caddy 配置 HTTPS，不要把 `.env`、SQLite 文件或模型密钥提交到代码仓库。
+正式上线必须配置HTTPS，不应把8000端口直接暴露到公网。
 
-## 六、更新与回滚
-
-更新知识库或代码后：
-
-```bash
-docker compose up -d --build
-docker compose logs --tail=100 customer-service-agent
-```
-
-查看容器状态：
-
-```bash
-docker compose ps
-```
+## 七、备份、更新与回滚
 
 停止服务但保留数据：
 
@@ -140,10 +171,67 @@ docker compose ps
 docker compose down
 ```
 
-不要随意执行 `docker compose down -v`，因为 `-v` 会删除工单、评测数据和模型缓存的数据卷。
+不要随意执行`docker compose down -v`，`-v`会删除PostgreSQL、Qdrant、Redis和模型缓存的数据卷。
 
-## 七、当前容量边界
+正式部署应定期备份：
 
-当前配置每个容器同时只执行 1 个 Agent 请求，其他请求会等待，目的是避免 CPU 模型互相争抢资源以及 SQLite 写入冲突。它适合个人演示和小流量校招项目，但不能据此宣称已经承载 100 个并发用户。
+- PostgreSQL：使用`pg_dump`；
+- Qdrant：使用集合Snapshot；
+- 知识原文件：由Git或对象存储保留版本。
 
-要提高容量，应先用压测得到单实例吞吐和 P95，再横向增加容器副本。多副本部署前，需要把 SQLite 替换为 PostgreSQL，并让 Nginx 或云负载均衡器分发请求。不要简单增加 Uvicorn worker，因为每个 worker 都会各自加载一份模型，占用数倍内存。
+更新前先记录镜像版本和评测结果。出现Bad Case时回滚应用镜像、知识提交和Qdrant集合，而不是直接修改线上数据。
+
+## 八、100人同时访问的容量边界
+
+这套架构已经消除了SQLite单文件写入和内存向量无法共享的问题，可以让多个Agent实例共享PostgreSQL、Qdrant与Redis。但“100个连接能进入系统”不等于“100个Agent任务能同时推理”。
+
+真正上线前仍需用压测获得单实例吞吐、P95、错误率和资源占用，再决定：
+
+- `API_MAX_CONCURRENCY`；
+- Agent容器副本数；
+- PostgreSQL连接池大小；
+- 大模型API限额；
+- 是否把Embedding/Rerank迁移到GPU推理服务。
+
+不要简单增加Uvicorn worker：每个worker都会单独加载Embedding和Rerank模型。更合理的扩容方式是用多个容器副本配合负载均衡，并把并发上限建立在压测数据上。
+
+在测试机上启动服务后执行：
+
+```bash
+export SERVICE_API_KEY="你的服务API Key"
+python tests/load_test.py \
+  --base-url http://127.0.0.1:8000 \
+  --concurrency 100 \
+  --requests 200 \
+  --confirm-real-llm-cost
+```
+
+脚本会生成`data/load_test_report.json`，至少检查：
+
+- 成功率是否达到预期；
+- P95/P99是否低于业务超时；
+- 是否出现429、504或连接错误；
+- PostgreSQL连接数、容器CPU与内存是否达到瓶颈；
+- 大模型服务的并发和Token限额是否触发。
+
+压测请求会调用真实模型并产生费用。不要把本地Mock测试结果当作生产容量结论。
+
+## 九、数据库迁移与发布验收
+
+每次发布前先在备份或临时数据库验证迁移：
+
+```bash
+python -m alembic upgrade head
+python -m alembic current
+```
+
+当前`20260728_0002`迁移新增了Token/成本字段、完整工具调用和引用记录。应用启动后完成以下验收：
+
+```bash
+curl http://127.0.0.1:8000/health/ready
+curl http://127.0.0.1:8000/metrics \
+  -H "X-API-Key: 你的SERVICE_API_KEY"
+docker compose logs --tail=200 customer-service-agent
+```
+
+确认一次知识问答、一次转人工、一次正向反馈均成功，再把镜像版本和评测报告记录为本次发布基线。

@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LLM_API_KEY: ci-placeholder
+      LLM_MODEL_NAME: ci-placeholder
+      SERVICE_API_KEY: ci-placeholder
+      POSTGRES_PASSWORD: ci-placeholder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Validate Python source
+        run: python -m compileall -q app tests migrations
+
+      - name: Run unit tests
+        run: python -m pytest -q
+
+      - name: Verify database migrations
+        env:
+          DATABASE_URL: sqlite+pysqlite:///data/ci_migration.db
+        run: |
+          python -m alembic upgrade head
+          python -m alembic downgrade base
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet

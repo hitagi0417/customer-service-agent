@@ -17,6 +17,16 @@ class FakeCompletions:
         self.called = True
 
         return SimpleNamespace(
+            usage=SimpleNamespace(
+                prompt_tokens=12,
+                completion_tokens=4,
+                total_tokens=16,
+                prompt_tokens_details=(
+                    SimpleNamespace(
+                        cached_tokens=2
+                    )
+                ),
+            ),
             choices=[
                 SimpleNamespace(
                     message=SimpleNamespace(
@@ -71,6 +81,14 @@ def test_classify_knowledge_query() -> None:
     assert result.confidence == 0.95
     assert result.fallback_used is False
     assert result.error is None
+    assert result.token_usage.model_calls == 1
+    assert result.token_usage.prompt_tokens == 12
+    assert result.token_usage.completion_tokens == 4
+    assert result.token_usage.total_tokens == 16
+    assert (
+        result.token_usage.cached_prompt_tokens
+        == 2
+    )
     assert client.completions.called is True
 
 

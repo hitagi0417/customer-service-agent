@@ -21,6 +21,10 @@ from app.schemas import (
     KnowledgeMatch,
     ToolCallRecord,
 )
+from app.telemetry import (
+    TokenUsageAccumulator,
+    extract_token_usage,
+)
 from app.tools import CustomerServiceTools
 
 
@@ -151,6 +155,8 @@ class CustomerServiceAgent:
                 request.question
             )
         )
+        token_usage = TokenUsageAccumulator()
+        token_usage.add(intent_result.token_usage)
 
         try:
             # 第二步：根据意图选择不同处理流程
@@ -158,6 +164,7 @@ class CustomerServiceAgent:
                 request_id=request_id,
                 question=request.question,
                 intent_result=intent_result,
+                token_usage=token_usage,
             )
 
         except Exception as error:
@@ -194,6 +201,7 @@ class CustomerServiceAgent:
                 total_duration_ms,
                 2,
             ),
+            token_usage=token_usage.snapshot(),
         )
 
         # 第三步：保存完整评测记录
@@ -229,6 +237,20 @@ class CustomerServiceAgent:
                 in branch_result.tool_calls
             ],
 
+            tool_calls=branch_result.tool_calls,
+
+            cited_chunk_ids=[
+                match.chunk_id
+                for match in branch_result.sources
+            ],
+
+            cited_sources=[
+                match.source
+                for match in branch_result.sources
+            ],
+
+            token_usage=token_usage.snapshot(),
+
             answer=branch_result.answer,
             need_human=branch_result.need_human,
             success=branch_result.success,
@@ -260,6 +282,7 @@ class CustomerServiceAgent:
         request_id: str,
         question: str,
         intent_result: IntentResult,
+        token_usage: TokenUsageAccumulator,
     ) -> BranchResult:
         """
         根据意图把请求发送到不同处理分支。
@@ -295,6 +318,7 @@ class CustomerServiceAgent:
             return self._handle_knowledge_query(
                 request_id=request_id,
                 question=question,
+                token_usage=token_usage,
             )
 
         if (
@@ -401,6 +425,7 @@ class CustomerServiceAgent:
         self,
         request_id: str,
         question: str,
+        token_usage: TokenUsageAccumulator,
     ) -> BranchResult:
         """
         处理知识咨询问题。
@@ -461,6 +486,7 @@ class CustomerServiceAgent:
                 self._generate_grounded_answer(
                     question=question,
                     matches=matches,
+                    token_usage=token_usage,
                 )
             )
 
@@ -566,6 +592,7 @@ class CustomerServiceAgent:
         self,
         question: str,
         matches: list[KnowledgeMatch],
+        token_usage: TokenUsageAccumulator,
     ) -> GroundedAnswer:
         """
         根据检索证据生成受约束的客服回答。
@@ -586,24 +613,34 @@ class CustomerServiceAgent:
             ensure_ascii=False,
         )
 
-        response = (
-            self.client.chat.completions.create(
-                model=settings.llm_model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": ANSWER_SYSTEM_PROMPT,
+        try:
+            response = (
+                self.client.chat.completions.create(
+                    model=settings.llm_model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": ANSWER_SYSTEM_PROMPT,
+                        },
+                        {
+                            "role": "user",
+                            "content": user_content,
+                        },
+                    ],
+                    temperature=0,
+                    response_format={
+                        "type": "json_object",
                     },
-                    {
-                        "role": "user",
-                        "content": user_content,
-                    },
-                ],
-                temperature=0,
-                response_format={
-                    "type": "json_object",
-                },
+                )
             )
+        except Exception:
+            token_usage.add(
+                extract_token_usage(None)
+            )
+            raise
+
+        token_usage.add(
+            extract_token_usage(response)
         )
 
         content = response.choices[0].message.content

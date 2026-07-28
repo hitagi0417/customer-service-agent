@@ -18,6 +18,8 @@ RUN python -m pip install --upgrade pip \
 
 COPY app ./app
 COPY knowledge ./knowledge
+COPY migrations ./migrations
+COPY alembic.ini .
 COPY api_run.py .
 
 RUN mkdir -p /app/data "${HF_HOME}" \
