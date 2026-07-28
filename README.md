@@ -4,6 +4,18 @@
 
 `用户问题 → 意图识别 → 知识检索/业务工具 → 受约束回答 → 评测记录`
 
+项目提供两套运行形态：
+
+- 本地开发/单元测试：SQLite + 内存向量索引，不依赖中间件。
+- Docker生产形态：PostgreSQL + Qdrant + Redis，支持共享数据、向量持久化和检索缓存。
+
+```text
+FastAPI / Agent
+  ├─ PostgreSQL：工单、执行记录、评测数据
+  ├─ Qdrant：知识向量、增量更新、删除同步
+  └─ Redis：检索结果缓存（知识版本变化后自动换Key失效）
+```
+
 ## 多格式知识库
 
 把文件放进 `knowledge/` 后，启动项目会自动递归扫描并解析。
@@ -79,6 +91,14 @@ python run.py
 
 首次使用时，先参考 `.env.example` 补全 `.env` 中的模型配置。
 
+需要启动完整生产依赖时：
+
+```powershell
+docker compose up -d --build
+```
+
+完整步骤见 `DEPLOYMENT.md`。
+
 ## 测试与评测
 
 ```powershell
@@ -86,7 +106,7 @@ python -m pytest -q
 python tests/evaluate.py
 ```
 
-单元测试覆盖各格式解析、知识加载、意图识别、检索和工具调用。自动评测会执行完整 Agent 链路，并将结果写入 `data/eval_report.json`。
+单元测试覆盖各格式解析、知识加载、意图识别、检索、工具调用和Qdrant增量同步。自动评测会执行完整 Agent 链路，并将结果写入 `data/eval_report.json`。
 
 当前端到端评测集包含54题，并按直接检索、精确关键词、语义改写、政策边界、多片段信息、相似型号干扰、版本冲突、HTML来源和无答案拒答等类型统计准确率。关键词评测支持同义概念组，例如“不能修改/无法修改/不可以修改”任意一个命中均可，避免把正确的自然语言改写误判为错误。
 
@@ -112,6 +132,8 @@ python tests/evaluate.py
 
 每条检索结果会同时保留 `vector_score`、`keyword_score`、融合 `score` 和 `rerank_score`，便于评测与Bad Case分析。Rerank默认使用支持中英文的 `BAAI/bge-reranker-base`，可以通过环境变量关闭。
 
+生产模式下，向量存入Qdrant。启动或热更新知识库时，系统用稳定的`chunk_id + content_hash + embedding_model`判断差异，只编码新增/变更片段，并删除知识库中已经不存在的向量。Redis缓存Key包含完整知识指纹，因此文档更新后旧缓存不会被继续命中。
+
 可以使用同一套标准来源问题比较三种检索模式：
 
 ```powershell
@@ -128,7 +150,12 @@ app/
   knowledge.py      # 统一加载、清洗、切片和元数据生成
   bm25.py           # 中文关键词切词和BM25索引
   retrieval.py      # BM25与向量混合检索
+  vector_store.py   # Qdrant增量同步和向量召回
+  cache.py          # Redis检索缓存及故障降级
+  database.py       # SQLAlchemy表结构与连接池
+  tickets.py        # 跨SQLite/PostgreSQL的工单仓储
   agent.py          # Agent 主链路与受约束回答
+migrations/         # Alembic数据库版本迁移
 knowledge/          # 本地知识文件和网页源清单
-tests/              # 单元测试与20题端到端评测
+tests/              # 单元测试、54题端到端评测和检索对比
 ```

@@ -1,3 +1,6 @@
+import hashlib
+import json
+import logging
 from typing import Literal
 
 from sentence_transformers import (
@@ -6,6 +9,11 @@ from sentence_transformers import (
 )
 
 from app.bm25 import BM25Index
+from app.cache import (
+    NullRetrievalCache,
+    RetrievalCache,
+    create_retrieval_cache,
+)
 from app.config import settings
 from app.knowledge import (
     KnowledgeChunk,
@@ -16,6 +24,13 @@ from app.reranking import (
     Reranker,
 )
 from app.schemas import KnowledgeMatch
+from app.vector_store import (
+    QdrantVectorStore,
+    VectorStore,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 RetrievalMode = Literal[
@@ -48,6 +63,8 @@ class KnowledgeRetriever:
         candidate_multiplier: int = 4,
         reranker: Reranker | None = None,
         rerank_candidate_k: int = 10,
+        vector_store: VectorStore | None = None,
+        cache: RetrievalCache | None = None,
     ) -> None:
         if not chunks:
             raise ValueError("知识片段不能为空")
@@ -84,16 +101,39 @@ class KnowledgeRetriever:
         self.candidate_multiplier = candidate_multiplier
         self.reranker = reranker
         self.rerank_candidate_k = rerank_candidate_k
+        self.model_name = model_name
+        self.vector_store = vector_store
+        self.cache = cache or NullRetrievalCache()
 
         print(f"正在加载向量模型：{model_name}")
 
         self.model = SentenceTransformer(model_name)
 
-        self.corpus_embeddings = self._encode_chunks(
-            self.chunks
-        )
+        if self.vector_store is None:
+            self.corpus_embeddings = self._encode_chunks(
+                self.chunks
+            )
+        else:
+            sync_result = self.vector_store.sync(
+                chunks=self.chunks,
+                embedding_model=self.model,
+                embedding_model_name=self.model_name,
+            )
+            self.corpus_embeddings = None
+            logger.info(
+                (
+                    "Qdrant同步完成：总片段=%d，"
+                    "新增或更新=%d，删除=%d"
+                ),
+                sync_result.total_chunks,
+                sync_result.upserted_chunks,
+                sync_result.deleted_chunks,
+            )
         self.keyword_index = self._build_keyword_index(
             self.chunks
+        )
+        self.knowledge_fingerprint = (
+            self._create_knowledge_fingerprint()
         )
 
         print(
@@ -226,6 +266,20 @@ class KnowledgeRetriever:
             ),
         )
 
+        cache_key = self._create_cache_key(
+            query=cleaned_query,
+            mode=mode,
+            top_k=actual_top_k,
+            min_score=actual_min_score,
+            min_keyword_score=(
+                actual_min_keyword_score
+            ),
+        )
+        cached_matches = self.cache.get(cache_key)
+
+        if cached_matches is not None:
+            return cached_matches
+
         vector_scores: dict[int, float] = {}
 
         if mode in {
@@ -233,23 +287,51 @@ class KnowledgeRetriever:
             "hybrid",
             "hybrid_rerank",
         }:
-            query_embedding = self.model.encode(
-                [cleaned_query],
-                convert_to_tensor=True,
-                normalize_embeddings=True,
-                show_progress_bar=False,
-            )
-            hits = util.semantic_search(
-                query_embedding,
-                self.corpus_embeddings,
-                top_k=candidate_k,
-            )[0]
-            vector_scores = {
-                int(hit["corpus_id"]): float(
-                    hit["score"]
+            if self.vector_store is None:
+                query_embedding = self.model.encode(
+                    [cleaned_query],
+                    convert_to_tensor=True,
+                    normalize_embeddings=True,
+                    show_progress_bar=False,
                 )
-                for hit in hits
-            }
+                hits = util.semantic_search(
+                    query_embedding,
+                    self.corpus_embeddings,
+                    top_k=candidate_k,
+                )[0]
+                vector_scores = {
+                    int(hit["corpus_id"]): float(
+                        hit["score"]
+                    )
+                    for hit in hits
+                }
+            else:
+                query_embedding = self.model.encode(
+                    [cleaned_query],
+                    convert_to_numpy=True,
+                    normalize_embeddings=True,
+                    show_progress_bar=False,
+                )
+                query_vector = query_embedding[0]
+                if hasattr(query_vector, "tolist"):
+                    query_vector = query_vector.tolist()
+                chunk_indexes = {
+                    chunk.chunk_id: index
+                    for index, chunk in enumerate(
+                        self.chunks
+                    )
+                }
+                vector_scores = {
+                    chunk_indexes[hit.chunk_id]: hit.score
+                    for hit in self.vector_store.search(
+                        query_vector=[
+                            float(item)
+                            for item in query_vector
+                        ],
+                        top_k=candidate_k,
+                    )
+                    if hit.chunk_id in chunk_indexes
+                }
 
         keyword_scores = [
             0.0
@@ -397,7 +479,9 @@ class KnowledgeRetriever:
             )
             matches = rerank_candidates
 
-        return matches[:actual_top_k]
+        final_matches = matches[:actual_top_k]
+        self.cache.set(cache_key, final_matches)
+        return final_matches
 
     def reload(
         self,
@@ -413,16 +497,74 @@ class KnowledgeRetriever:
             raise ValueError("新的知识片段不能为空")
 
         self.chunks = chunks
-        self.corpus_embeddings = self._encode_chunks(
-            self.chunks
-        )
+        if self.vector_store is None:
+            self.corpus_embeddings = self._encode_chunks(
+                self.chunks
+            )
+        else:
+            self.vector_store.sync(
+                chunks=self.chunks,
+                embedding_model=self.model,
+                embedding_model_name=self.model_name,
+            )
+            self.corpus_embeddings = None
         self.keyword_index = self._build_keyword_index(
             self.chunks
+        )
+        self.knowledge_fingerprint = (
+            self._create_knowledge_fingerprint()
         )
 
         print(
             "知识库混合索引重新加载完成，"
             f"共{len(self.chunks)}个片段"
+        )
+
+    def _create_knowledge_fingerprint(self) -> str:
+        payload = [
+            {
+                "chunk_id": chunk.chunk_id,
+                "content": chunk.content,
+            }
+            for chunk in sorted(
+                self.chunks,
+                key=lambda item: item.chunk_id,
+            )
+        ]
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+
+    def _create_cache_key(
+        self,
+        query: str,
+        mode: RetrievalMode,
+        top_k: int,
+        min_score: float,
+        min_keyword_score: float,
+    ) -> str:
+        payload = {
+            "knowledge": self.knowledge_fingerprint,
+            "embedding_model": self.model_name,
+            "query": query,
+            "mode": mode,
+            "top_k": top_k,
+            "min_score": min_score,
+            "min_keyword_score": min_keyword_score,
+            "keyword_weight": self.keyword_weight,
+            "reranker": bool(self.reranker),
+            "rerank_candidate_k": (
+                self.rerank_candidate_k
+            ),
+        }
+        return json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
         )
 
 
@@ -446,6 +588,20 @@ def create_knowledge_retriever(
         if should_enable_reranker
         else None
     )
+    vector_store = (
+        QdrantVectorStore(
+            url=settings.qdrant_url or "",
+            api_key=settings.qdrant_api_key,
+            collection_name=(
+                settings.qdrant_collection
+            ),
+            timeout_seconds=(
+                settings.qdrant_timeout_seconds
+            ),
+        )
+        if settings.vector_store_backend == "qdrant"
+        else None
+    )
 
     return KnowledgeRetriever(
         chunks=chunks,
@@ -463,4 +619,6 @@ def create_knowledge_retriever(
         rerank_candidate_k=(
             settings.rerank_candidate_k
         ),
+        vector_store=vector_store,
+        cache=create_retrieval_cache(),
     )

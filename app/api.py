@@ -23,6 +23,10 @@ from app.agent import (
     create_customer_service_agent,
 )
 from app.config import settings
+from app.database import (
+    check_database_health,
+    dispose_database_engines,
+)
 from app.schemas import AgentResponse, ChatRequest
 
 
@@ -150,6 +154,7 @@ def create_app(
         logger.info("API服务准备完成")
         yield
         app.state.runtime = None
+        dispose_database_engines()
 
     application = FastAPI(
         title="智能客服Agent API",
@@ -182,6 +187,29 @@ def create_app(
                 status_code=503,
                 detail="服务尚未准备完成",
             )
+
+        if (
+            settings.app_env == "production"
+            and not check_database_health()
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail="业务数据库不可用",
+            )
+
+        if settings.vector_store_backend == "qdrant":
+            vector_store = (
+                runtime.agent.tools.retriever.vector_store
+            )
+
+            if (
+                vector_store is None
+                or not vector_store.ping()
+            ):
+                raise HTTPException(
+                    status_code=503,
+                    detail="向量数据库不可用",
+                )
 
         return {"status": "ready"}
 

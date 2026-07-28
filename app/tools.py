@@ -5,9 +5,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.database import get_connection, initialize_database
 from app.retrieval import KnowledgeRetriever
 from app.schemas import ToolCallRecord, utc_now
+from app.tickets import Ticket, TicketRepository
 
 
 class KnowledgeSearchArguments(BaseModel):
@@ -61,7 +61,7 @@ class CustomerServiceTools:
 
     def __init__(self, retriever: KnowledgeRetriever) -> None:
         self.retriever = retriever
-        initialize_database()
+        self.ticket_repository = TicketRepository()
 
         self._handlers: dict[
             str,
@@ -140,63 +140,25 @@ class CustomerServiceTools:
         """创建工单；同一个 request_id 重试时返回原工单。"""
         validated = CreateTicketArguments.model_validate(arguments)
         new_ticket_id = f"ticket_{uuid.uuid4().hex[:12]}"
-        created_at = utc_now().isoformat()
-        connection = get_connection()
-
-        try:
-            cursor = connection.execute(
-                """
-                INSERT OR IGNORE INTO service_tickets (
-                    ticket_id,
-                    request_id,
-                    question,
-                    reason,
-                    status,
-                    created_at
+        saved, created = (
+            self.ticket_repository.create_or_get(
+                Ticket(
+                    ticket_id=new_ticket_id,
+                    request_id=validated.request_id,
+                    question=validated.question,
+                    reason=validated.reason,
+                    status="pending",
+                    created_at=utc_now(),
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    new_ticket_id,
-                    validated.request_id,
-                    validated.question,
-                    validated.reason,
-                    "pending",
-                    created_at,
-                ),
             )
-            connection.commit()
+        )
 
-            created = cursor.rowcount == 1
-            row = connection.execute(
-                """
-                SELECT
-                    ticket_id,
-                    request_id,
-                    question,
-                    reason,
-                    status,
-                    created_at
-                FROM service_tickets
-                WHERE request_id = ?
-                """,
-                (validated.request_id,),
-            ).fetchone()
-
-            if row is None:
-                raise RuntimeError("创建工单后无法查询到工单")
-
-            return {
-                "ticket_id": row["ticket_id"],
-                "request_id": row["request_id"],
-                "question": row["question"],
-                "reason": row["reason"],
-                "status": row["status"],
-                "created_at": row["created_at"],
-                "created": created,
-            }
-        except Exception:
-            connection.rollback()
-            raise
-        finally:
-            connection.close()
+        return {
+            "ticket_id": saved.ticket_id,
+            "request_id": saved.request_id,
+            "question": saved.question,
+            "reason": saved.reason,
+            "status": saved.status,
+            "created_at": saved.created_at.isoformat(),
+            "created": created,
+        }

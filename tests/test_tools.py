@@ -3,7 +3,9 @@ from pathlib import Path
 import pytest
 
 from app.config import settings
-from app.database import get_connection
+from sqlalchemy import func, select
+
+from app.database import get_engine, service_tickets
 from app.evaluation import EvaluationRepository
 from app.schemas import (
     EvaluationRecord,
@@ -48,6 +50,7 @@ def temporary_database(
     测试完成后恢复正式数据库路径。
     """
     original_path = settings.database_path
+    original_url = settings.database_url
 
     test_database_path = (
         tmp_path / "test_customer_service.db"
@@ -58,6 +61,11 @@ def temporary_database(
         "database_path",
         test_database_path,
     )
+    object.__setattr__(
+        settings,
+        "database_url",
+        None,
+    )
 
     try:
         yield test_database_path
@@ -67,6 +75,11 @@ def temporary_database(
             settings,
             "database_path",
             original_path,
+        )
+        object.__setattr__(
+            settings,
+            "database_url",
+            original_url,
         )
 
 
@@ -190,22 +203,17 @@ def test_ticket_creation_is_idempotent(
         == second_result.result["ticket_id"]
     )
 
-    connection = get_connection()
+    with get_engine().connect() as connection:
+        ticket_count = connection.scalar(
+            select(func.count())
+            .select_from(service_tickets)
+            .where(
+                service_tickets.c.request_id
+                == "request_same_001"
+            )
+        )
 
-    try:
-        row = connection.execute(
-            """
-            SELECT COUNT(*) AS ticket_count
-            FROM service_tickets
-            WHERE request_id = ?
-            """,
-            ("request_same_001",),
-        ).fetchone()
-
-        assert row["ticket_count"] == 1
-
-    finally:
-        connection.close()
+    assert ticket_count == 1
 
 
 def test_evaluation_record_can_be_saved(

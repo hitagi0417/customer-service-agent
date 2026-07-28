@@ -1,4 +1,60 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-customer_service}
+      POSTGRES_USER: ${POSTGRES_USER:-agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请先在.env中配置POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-agent} -d ${POSTGRES_DB:-customer_service}
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "bash -c ':> /dev/tcp/127.0.0.1/6333'"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory-policy
+      - allkeys-lru
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   customer-service-agent:
     build:
       context: .
@@ -9,8 +65,22 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL_NAME: ${LLM_MODEL_NAME:?请先在.env中配置LLM_MODEL_NAME}
       SERVICE_API_KEY: ${SERVICE_API_KEY:?请先在.env中配置SERVICE_API_KEY}
-      API_MAX_CONCURRENCY: ${API_MAX_CONCURRENCY:-1}
+      API_MAX_CONCURRENCY: ${API_MAX_CONCURRENCY:-4}
       API_REQUEST_TIMEOUT_SECONDS: ${API_REQUEST_TIMEOUT_SECONDS:-60}
+
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-agent}:${POSTGRES_PASSWORD:?请配置POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-customer_service}
+      DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-5}
+      DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-10}
+
+      VECTOR_STORE_BACKEND: qdrant
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-customer_service_knowledge}
+      QDRANT_TIMEOUT_SECONDS: ${QDRANT_TIMEOUT_SECONDS:-10}
+
+      ENABLE_RETRIEVAL_CACHE: "true"
+      REDIS_URL: redis://redis:6379/0
+      RETRIEVAL_CACHE_TTL_SECONDS: ${RETRIEVAL_CACHE_TTL_SECONDS:-300}
+
       EMBEDDING_MODEL_NAME: ${EMBEDDING_MODEL_NAME:-BAAI/bge-small-zh-v1.5}
       RAG_TOP_K: ${RAG_TOP_K:-3}
       RAG_MIN_SCORE: ${RAG_MIN_SCORE:-0.45}
@@ -24,16 +94,29 @@ services:
       ENABLE_WEB_INGESTION: ${ENABLE_WEB_INGESTION:-false}
       WEB_SOURCES_PATH: ${WEB_SOURCES_PATH:-knowledge/web_sources.json}
       WEB_ALLOWED_DOMAINS: ${WEB_ALLOWED_DOMAINS:-}
-      DATABASE_PATH: /app/data/customer_service.db
       INGESTION_REPORT_PATH: /app/data/ingestion_report.json
       HF_HOME: /home/appuser/.cache/huggingface
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - agent-data:/app/data
       - huggingface-cache:/home/appuser/.cache/huggingface
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - python -m alembic upgrade head && python api_run.py
     restart: unless-stopped
 
 volumes:
   agent-data:
   huggingface-cache:
+  postgres-data:
+  qdrant-data:
+  redis-data:

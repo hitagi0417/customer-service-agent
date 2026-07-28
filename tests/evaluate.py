@@ -179,6 +179,7 @@ def run_evaluation(
     original_database_path = (
         settings.database_path
     )
+    original_database_url = settings.database_url
 
     results: list[dict] = []
     failures: list[dict] = []
@@ -212,6 +213,11 @@ def run_evaluation(
                 settings,
                 "database_path",
                 temporary_database,
+            )
+            object.__setattr__(
+                settings,
+                "database_url",
+                None,
             )
 
             agent = (
@@ -500,6 +506,11 @@ def run_evaluation(
             settings,
             "database_path",
             original_database_path,
+        )
+        object.__setattr__(
+            settings,
+            "database_url",
+            original_database_url,
         )
 
     total_count = len(cases)
