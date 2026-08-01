@@ -10,6 +10,7 @@ class FakeAgent:
         self,
         question: str,
         conversation_id: str | None = None,
+        customer_id: str = "demo_customer",
     ) -> AgentResponse:
         return AgentResponse(
             request_id="request_test",
@@ -24,6 +25,7 @@ class BrokenAgent:
         self,
         question: str,
         conversation_id: str | None = None,
+        customer_id: str = "demo_customer",
     ) -> AgentResponse:
         raise RuntimeError("不应泄露的内部错误")
 

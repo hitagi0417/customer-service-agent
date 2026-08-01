@@ -1,6 +1,7 @@
 import time
 import uuid
 from collections.abc import Callable
+from datetime import datetime, timezone
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -39,21 +40,22 @@ class CreateTicketArguments(BaseModel):
         str_strip_whitespace=True,
     )
 
-    request_id: str = Field(
-        min_length=1,
-        max_length=100,
-        description="本次请求的唯一编号",
+    request_id: str = Field(min_length=1, max_length=100)
+    question: str = Field(min_length=1, max_length=1000)
+    reason: str = Field(min_length=1, max_length=1000)
+
+
+class OrderArguments(BaseModel):
+    """订单类只读工具的公共参数。"""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
     )
-    question: str = Field(
-        min_length=1,
-        max_length=1000,
-        description="用户的原始问题",
-    )
-    reason: str = Field(
-        min_length=1,
-        max_length=1000,
-        description="创建人工工单的原因",
-    )
+
+    order_id: str = Field(min_length=1, max_length=100)
+    customer_id: str = Field(min_length=1, max_length=100)
+
 
 
 class CustomerServiceTools:
@@ -68,6 +70,10 @@ class CustomerServiceTools:
             Callable[[dict[str, Any]], dict[str, Any]],
         ] = {
             "search_knowledge_base": self._search_knowledge_base,
+            "query_order": self._query_order,
+            "check_refund_eligibility": (
+                self._check_refund_eligibility
+            ),
             "create_service_ticket": self._create_service_ticket,
         }
 
@@ -198,5 +204,110 @@ class CustomerServiceTools:
         except Exception:
             connection.rollback()
             raise
+        finally:
+            connection.close()
+
+    def _query_order(
+        self,
+        arguments: dict[str, Any],
+    ) -> dict[str, Any]:
+        """按客户权限边界查询订单，不允许跨客户读取。"""
+        validated = OrderArguments.model_validate(arguments)
+        row = self._get_order(
+            order_id=validated.order_id,
+            customer_id=validated.customer_id,
+        )
+        if row is None:
+            return {
+                "found": False,
+                "order_id": validated.order_id,
+            }
+        return {
+            "found": True,
+            "order_id": row["order_id"],
+            "item_name": row["item_name"],
+            "amount": row["amount"],
+            "status": row["status"],
+            "paid_at": row["paid_at"],
+            "shipped_at": row["shipped_at"],
+            "delivered_at": row["delivered_at"],
+        }
+
+    def _check_refund_eligibility(
+        self,
+        arguments: dict[str, Any],
+    ) -> dict[str, Any]:
+        """根据订单状态和签收时间判断退款时间条件。"""
+        validated = OrderArguments.model_validate(arguments)
+        row = self._get_order(
+            order_id=validated.order_id,
+            customer_id=validated.customer_id,
+        )
+        if row is None:
+            return {
+                "found": False,
+                "eligible": False,
+                "reason": "未找到当前客户的订单",
+            }
+
+        if row["status"] in {"cancelled", "refunded"}:
+            return {
+                "found": True,
+                "eligible": False,
+                "reason": f"订单状态为{row['status']}，不能重复申请",
+            }
+
+        if row["delivered_at"] is None:
+            return {
+                "found": True,
+                "eligible": False,
+                "reason": "订单尚未签收，需要按取消订单流程处理",
+                "status": row["status"],
+            }
+
+        delivered_at = datetime.fromisoformat(row["delivered_at"])
+        if delivered_at.tzinfo is None:
+            delivered_at = delivered_at.replace(tzinfo=timezone.utc)
+        elapsed_days = max(
+            0,
+            (utc_now() - delivered_at).days,
+        )
+        refundable_days = int(row["refundable_days"])
+        eligible = elapsed_days <= refundable_days
+        return {
+            "found": True,
+            "eligible": eligible,
+            "order_id": row["order_id"],
+            "status": row["status"],
+            "elapsed_days": elapsed_days,
+            "refundable_days": refundable_days,
+            "reason": (
+                "仍在退款申请期限内"
+                if eligible
+                else "已超过退款申请期限"
+            ),
+        }
+
+    @staticmethod
+    def _get_order(order_id: str, customer_id: str):
+        connection = get_connection()
+        try:
+            return connection.execute(
+                """
+                SELECT
+                    order_id,
+                    customer_id,
+                    item_name,
+                    amount,
+                    status,
+                    paid_at,
+                    shipped_at,
+                    delivered_at,
+                    refundable_days
+                FROM orders
+                WHERE order_id = ? AND customer_id = ?
+                """,
+                (order_id, customer_id),
+            ).fetchone()
         finally:
             connection.close()

@@ -2,7 +2,23 @@
 
 这个项目面向企业客服场景，解决人工查询知识库和重复回答效率低的问题。核心链路为：
 
-`用户问题 → 意图识别 → 知识检索/业务工具 → 受约束回答 → 评测记录`
+`会话记忆 → 问题改写 → 意图识别 → 受控规划 → 业务工具 → 引用校验 → 评测记录`
+
+## 多轮记忆与受控 Agent
+
+每个会话通过 `conversation_id` 持久化到 SQLite，并与 `customer_id` 绑定，避免跨客户读取历史或订单。上下文由“结构化滚动摘要 + 最近消息窗口”组成；当前追问会先改写成可独立理解的问题，再进入意图识别和检索，避免直接把无限历史塞进 Prompt。
+
+知识咨询和业务请求使用最多 `AGENT_MAX_STEPS` 步的 Planner。Planner 每一步只能选择以下白名单动作：
+
+- `search_knowledge_base`：检索知识库；最终回答必须引用真实返回的 `chunk_id`。
+- `query_order`：查询当前客户订单。
+- `check_refund_eligibility`：根据订单状态、签收时间和退款窗口做只读判断。
+- `create_service_ticket`：证据不足、工具失败或确需人工时创建幂等工单。
+- `ask_clarification` / `finish`：追问缺失信息或结束执行。
+
+订单工具的 `customer_id`、工单的 `request_id` 都由服务端注入，模型输出无法覆盖。示例订单为 `DEMO-1001`（已签收）和 `DEMO-1002`（已发货）。API 响应与评测记录会保存问题改写结果、规划轨迹、各阶段耗时和累计 Token 用量，便于复盘成本与 Bad Case。
+
+当前 `customer_id` 是便于本地演示的数据隔离参数，并不替代真实认证；生产环境应从登录态或 JWT 声明中解析客户身份，不能直接信任请求体中的身份字段。
 
 ## 多格式知识库
 
@@ -84,11 +100,13 @@ python run.py
 ```powershell
 python -m pytest -q
 python tests/evaluate.py
+python tests/evaluate.py --cases tests/eval_holdout_cases.json --output data/eval_holdout_report.json
+python tests/evaluate_multiturn.py
 ```
 
-单元测试覆盖各格式解析、知识加载、意图识别、检索和工具调用。自动评测会执行完整 Agent 链路，并将结果写入 `data/eval_report.json`。
+单元测试覆盖各格式解析、知识加载、意图识别、会话隔离、滚动摘要、受控规划、订单权限边界和工具调用。自动评测会执行完整 Agent 链路，并将结果写入 `data/eval_report.json`。
 
-当前端到端评测集包含54题，并按直接检索、精确关键词、语义改写、政策边界、多片段信息、相似型号干扰、版本冲突、HTML来源和无答案拒答等类型统计准确率。关键词评测支持同义概念组，例如“不能修改/无法修改/不可以修改”任意一个命中均可，避免把正确的自然语言改写误判为错误。
+评测分为54题开发回归集、12题独立 holdout 集和4组多轮对话集。指标包含意图准确率、来源 Recall@K、安全拒答、工具选择准确率、转人工率、分阶段耗时和平均 Token。多轮集额外检查指代补全、缺失槽位追问、上下文订单号继承与 Prompt Injection。关键词概念匹配只用于稳定回归，不等同于人工质量评分；对外表述指标时应同时注明评测集、模型、日期和评测方法。
 
 ## 混合检索
 
@@ -128,7 +146,9 @@ app/
   knowledge.py      # 统一加载、清洗、切片和元数据生成
   bm25.py           # 中文关键词切词和BM25索引
   retrieval.py      # BM25与向量混合检索
-  agent.py          # Agent 主链路与受约束回答
+  conversation.py   # 会话持久化、近期窗口与滚动摘要
+  planning.py       # 结构化 Planner 动作协议
+  agent.py          # 多轮改写、受控执行与引用校验
 knowledge/          # 本地知识文件和网页源清单
-tests/              # 单元测试与20题端到端评测
+tests/              # 单元测试、开发集、holdout与多轮评测
 ```

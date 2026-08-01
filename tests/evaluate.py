@@ -48,6 +48,8 @@ class EvalCase(BaseModel):
 
     expected_need_human: bool
 
+    expected_tools: list[str] = Field(default_factory=list)
+
     expected_answer_keywords: list[
         str | list[str]
     ] = Field(
@@ -183,11 +185,14 @@ def run_evaluation(
     results: list[dict] = []
     failures: list[dict] = []
     durations: list[float] = []
+    total_tokens: list[int] = []
 
     intent_correct = 0
     transfer_correct = 0
     keyword_correct = 0
     keyword_total = 0
+    tool_selection_correct = 0
+    tool_selection_total = 0
 
     retrieval_correct = 0
     retrieval_total = 0
@@ -240,6 +245,9 @@ def run_evaluation(
 
                     durations.append(
                         response.total_duration_ms
+                    )
+                    total_tokens.append(
+                        response.token_usage.total_tokens
                     )
 
                     # 1. 检查意图
@@ -398,6 +406,24 @@ def run_evaluation(
                     if response.auto_resolved:
                         auto_resolved_count += 1
 
+                    # 6. 检查Planner实际选择的工具，而不是只看答案文本
+                    actual_tools = [
+                        item.tool_name for item in response.tool_calls
+                    ]
+                    if case.expected_tools:
+                        tool_selection_total += 1
+                        missing_tools = [
+                            name for name in case.expected_tools
+                            if name not in actual_tools
+                        ]
+                        if not missing_tools:
+                            tool_selection_correct += 1
+                        else:
+                            case_failures.append(
+                                "工具选择错误："
+                                f"缺少={missing_tools}，实际={actual_tools}"
+                            )
+
                     case_passed = (
                         len(case_failures) == 0
                     )
@@ -448,6 +474,11 @@ def run_evaluation(
                             retrieved_sources
                         ),
                         "answer": response.answer,
+                        "expected_tools": case.expected_tools,
+                        "actual_tools": actual_tools,
+                        "planning_steps": response.planning_steps,
+                        "token_usage": response.token_usage.model_dump(),
+                        "stage_durations_ms": response.stage_durations_ms,
                         "duration_ms": (
                             response.total_duration_ms
                         ),
@@ -568,6 +599,17 @@ def run_evaluation(
                 )
             ),
 
+            "tool_selection_accuracy": calculate_rate(
+                tool_selection_correct,
+                tool_selection_total,
+            ),
+
+            "average_total_tokens": round(
+                statistics.mean(total_tokens)
+                if total_tokens else 0.0,
+                2,
+            ),
+
             "average_duration_ms": round(
                 statistics.mean(durations)
                 if durations
@@ -604,11 +646,19 @@ def run_evaluation(
             ),
             "keyword_correct": keyword_correct,
             "keyword_total": keyword_total,
+            "tool_selection_correct": tool_selection_correct,
+            "tool_selection_total": tool_selection_total,
             "failure_count": len(failures),
         },
 
         "failures": failures,
         "results": results,
+        "evaluation_method": {
+            "intent_and_tools": "exact_match",
+            "retrieval": "required_source_recall_at_k",
+            "answer": "keyword_concept_regression",
+            "note": "关键词指标用于回归监控，不等同于人工质量评分",
+        },
     }
 
     return report
@@ -651,6 +701,13 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "--cases",
+        type=Path,
+        default=PROJECT_ROOT / "tests" / "eval_cases.json",
+        help="评测集JSON路径",
+    )
+
+    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -670,11 +727,7 @@ def main() -> None:
 
     arguments = parser.parse_args()
 
-    eval_path = (
-        PROJECT_ROOT
-        / "tests"
-        / "eval_cases.json"
-    )
+    eval_path = arguments.cases
 
     cases = load_eval_cases(eval_path)
 

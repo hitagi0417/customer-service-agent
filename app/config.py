@@ -125,6 +125,12 @@ class Settings:
     rerank_candidate_k: int
     intent_min_confidence: float
 
+    # 多轮记忆与受控规划
+    memory_recent_messages: int
+    memory_summary_trigger_tokens: int
+    memory_max_summary_chars: int
+    agent_max_steps: int
+
     def __post_init__(self) -> None:
         if self.chunk_size <= 0:
             raise ValueError("CHUNK_SIZE必须大于0")
@@ -183,6 +189,16 @@ class Settings:
             raise ValueError(
                 "INTENT_MIN_CONFIDENCE必须在0到1之间"
             )
+        if self.memory_recent_messages <= 0:
+            raise ValueError("MEMORY_RECENT_MESSAGES必须大于0")
+        if self.memory_summary_trigger_tokens <= 0:
+            raise ValueError(
+                "MEMORY_SUMMARY_TRIGGER_TOKENS必须大于0"
+            )
+        if self.memory_max_summary_chars <= 0:
+            raise ValueError("MEMORY_MAX_SUMMARY_CHARS必须大于0")
+        if not 1 <= self.agent_max_steps <= 10:
+            raise ValueError("AGENT_MAX_STEPS必须在1到10之间")
         if self.enable_web_ingestion and not self.web_allowed_domains:
             raise ValueError(
                 "ENABLE_WEB_INGESTION=true 时，"
@@ -242,6 +258,12 @@ class Settings:
                 self.rerank_candidate_k
             ),
             "intent_min_confidence": self.intent_min_confidence,
+            "memory_recent_messages": self.memory_recent_messages,
+            "memory_summary_trigger_tokens": (
+                self.memory_summary_trigger_tokens
+            ),
+            "memory_max_summary_chars": self.memory_max_summary_chars,
+            "agent_max_steps": self.agent_max_steps,
         }
 
 
@@ -353,5 +375,21 @@ settings = Settings(
     # 低于该置信度的意图不会触发知识或业务工具。
     intent_min_confidence=float(
         os.getenv("INTENT_MIN_CONFIDENCE", "0.60")
+    ),
+
+    memory_recent_messages=int(
+        os.getenv("MEMORY_RECENT_MESSAGES", "8")
+    ),
+
+    memory_summary_trigger_tokens=int(
+        os.getenv("MEMORY_SUMMARY_TRIGGER_TOKENS", "2000")
+    ),
+
+    memory_max_summary_chars=int(
+        os.getenv("MEMORY_MAX_SUMMARY_CHARS", "2000")
+    ),
+
+    agent_max_steps=int(
+        os.getenv("AGENT_MAX_STEPS", "3")
     ),
 )

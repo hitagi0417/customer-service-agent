@@ -74,6 +74,106 @@ def initialize_database() -> None:
                 idx_service_tickets_status
             ON service_tickets(status);
 
+            CREATE TABLE IF NOT EXISTS conversations (
+                conversation_id TEXT PRIMARY KEY,
+                customer_id TEXT NOT NULL,
+                summary TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS conversation_messages (
+                message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id TEXT NOT NULL,
+                role TEXT NOT NULL
+                    CHECK (role IN ('user', 'assistant', 'tool')),
+                content TEXT NOT NULL,
+                token_estimate INTEGER NOT NULL
+                    CHECK (token_estimate >= 0),
+                summarized INTEGER NOT NULL DEFAULT 0
+                    CHECK (summarized IN (0, 1)),
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (conversation_id)
+                    REFERENCES conversations(conversation_id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS
+                idx_messages_conversation
+            ON conversation_messages(
+                conversation_id,
+                message_id
+            );
+
+            CREATE TABLE IF NOT EXISTS orders (
+                order_id TEXT PRIMARY KEY,
+                customer_id TEXT NOT NULL,
+                item_name TEXT NOT NULL,
+                amount REAL NOT NULL CHECK (amount >= 0),
+                status TEXT NOT NULL
+                    CHECK (
+                        status IN (
+                            'paid',
+                            'shipped',
+                            'delivered',
+                            'cancelled',
+                            'refunded'
+                        )
+                    ),
+                paid_at TEXT,
+                shipped_at TEXT,
+                delivered_at TEXT,
+                refundable_days INTEGER NOT NULL DEFAULT 7
+                    CHECK (refundable_days > 0)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_orders_customer
+            ON orders(customer_id, order_id);
+
+            INSERT OR IGNORE INTO orders (
+                order_id,
+                customer_id,
+                item_name,
+                amount,
+                status,
+                paid_at,
+                shipped_at,
+                delivered_at,
+                refundable_days
+            ) VALUES (
+                'DEMO-1001',
+                'demo_customer',
+                'XJ-900 标准版',
+                899.00,
+                'delivered',
+                datetime('now', '-6 days'),
+                datetime('now', '-5 days'),
+                datetime('now', '-3 days'),
+                7
+            );
+
+            INSERT OR IGNORE INTO orders (
+                order_id,
+                customer_id,
+                item_name,
+                amount,
+                status,
+                paid_at,
+                shipped_at,
+                delivered_at,
+                refundable_days
+            ) VALUES (
+                'DEMO-1002',
+                'demo_customer',
+                'A100',
+                399.00,
+                'shipped',
+                datetime('now', '-2 days'),
+                datetime('now', '-1 day'),
+                NULL,
+                7
+            );
+
 
             CREATE TABLE IF NOT EXISTS evaluation_records (
                 request_id TEXT PRIMARY KEY,
@@ -123,6 +223,8 @@ def initialize_database() -> None:
                 total_duration_ms REAL NOT NULL
                     CHECK (total_duration_ms >= 0),
 
+                trace_metadata TEXT NOT NULL DEFAULT '{}',
+
                 user_feedback INTEGER
                     CHECK (
                         user_feedback IS NULL
@@ -155,6 +257,14 @@ def initialize_database() -> None:
                 ALTER TABLE evaluation_records
                 ADD COLUMN auto_resolved INTEGER NOT NULL DEFAULT 0
                     CHECK (auto_resolved IN (0, 1))
+                """
+            )
+
+        if "trace_metadata" not in evaluation_columns:
+            connection.execute(
+                """
+                ALTER TABLE evaluation_records
+                ADD COLUMN trace_metadata TEXT NOT NULL DEFAULT '{}'
                 """
             )
 

@@ -39,7 +39,62 @@ class ChatRequest(BaseModel):
 
     conversation_id: str | None = Field(
         default=None,
-        description="会话ID，第一版命令行程序中可以为空",
+        min_length=1,
+        max_length=100,
+        description="会话ID；为空时服务端自动创建新会话",
+    )
+
+    customer_id: str = Field(
+        default="demo_customer",
+        min_length=1,
+        max_length=100,
+        description="业务数据权限边界内的客户编号",
+    )
+
+
+class TokenUsage(BaseModel):
+    """一次或多次模型调用累计的Token用量。"""
+
+    prompt_tokens: int = Field(default=0, ge=0)
+    completion_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+
+    def plus(self, other: "TokenUsage") -> "TokenUsage":
+        return TokenUsage(
+            prompt_tokens=(
+                self.prompt_tokens + other.prompt_tokens
+            ),
+            completion_tokens=(
+                self.completion_tokens + other.completion_tokens
+            ),
+            total_tokens=self.total_tokens + other.total_tokens,
+        )
+
+
+def token_usage_from_response(response: Any) -> TokenUsage:
+    """兼容OpenAI及OpenAI兼容接口的usage对象。"""
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return TokenUsage()
+
+    prompt_tokens = int(
+        getattr(usage, "prompt_tokens", 0) or 0
+    )
+    completion_tokens = int(
+        getattr(usage, "completion_tokens", 0) or 0
+    )
+    total_tokens = int(
+        getattr(
+            usage,
+            "total_tokens",
+            prompt_tokens + completion_tokens,
+        )
+        or 0
+    )
+    return TokenUsage(
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
     )
 
 
@@ -69,6 +124,11 @@ class IntentResult(BaseModel):
     error: str | None = Field(
         default=None,
         description="意图识别失败时的内部错误类型",
+    )
+
+    token_usage: TokenUsage = Field(
+        default_factory=TokenUsage,
+        description="意图识别模型的Token用量",
     )
 
 
@@ -174,6 +234,11 @@ class AgentResponse(BaseModel):
         description="本次请求的唯一编号",
     )
 
+    conversation_id: str = Field(
+        default="",
+        description="本次请求所属会话；可用于后续多轮请求",
+    )
+
     answer: str = Field(
         min_length=1,
         description="返回给用户的最终回答",
@@ -209,6 +274,26 @@ class AgentResponse(BaseModel):
         description="整条Agent链路的总耗时",
     )
 
+    rewritten_question: str | None = Field(
+        default=None,
+        description="结合历史上下文后的独立问题",
+    )
+
+    planning_steps: list[str] = Field(
+        default_factory=list,
+        description="受控Agent执行过的规划动作",
+    )
+
+    token_usage: TokenUsage = Field(
+        default_factory=TokenUsage,
+        description="整条链路累计的Token用量",
+    )
+
+    stage_durations_ms: dict[str, float] = Field(
+        default_factory=dict,
+        description="上下文、改写、意图、规划等阶段耗时",
+    )
+
 
 class EvaluationRecord(BaseModel):
     """
@@ -226,6 +311,31 @@ class EvaluationRecord(BaseModel):
     question: str = Field(
         min_length=1,
         description="用户的原始问题",
+    )
+
+    conversation_id: str | None = Field(
+        default=None,
+        description="请求所属会话",
+    )
+
+    rewritten_question: str | None = Field(
+        default=None,
+        description="结合历史改写后的问题",
+    )
+
+    planning_steps: list[str] = Field(
+        default_factory=list,
+        description="Agent规划与执行轨迹",
+    )
+
+    token_usage: TokenUsage = Field(
+        default_factory=TokenUsage,
+        description="累计Token用量",
+    )
+
+    stage_durations_ms: dict[str, float] = Field(
+        default_factory=dict,
+        description="各阶段耗时",
     )
 
     predicted_intent: IntentType = Field(

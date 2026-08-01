@@ -9,6 +9,7 @@ from app.schemas import (
     EvaluationRecord,
     IntentType,
     KnowledgeMatch,
+    TokenUsage,
 )
 from app.tools import CustomerServiceTools
 
@@ -208,6 +209,52 @@ def test_ticket_creation_is_idempotent(
         connection.close()
 
 
+def test_query_order_respects_customer_boundary(
+    tools: CustomerServiceTools,
+) -> None:
+    own_order = tools.execute(
+        tool_name="query_order",
+        arguments={
+            "order_id": "DEMO-1001",
+            "customer_id": "demo_customer",
+        },
+    )
+    other_customer = tools.execute(
+        tool_name="query_order",
+        arguments={
+            "order_id": "DEMO-1001",
+            "customer_id": "customer-attacker",
+        },
+    )
+
+    assert own_order.success is True
+    assert own_order.result is not None
+    assert own_order.result["found"] is True
+    assert other_customer.success is True
+    assert other_customer.result == {
+        "found": False,
+        "order_id": "DEMO-1001",
+    }
+
+
+def test_refund_eligibility_uses_delivery_window(
+    tools: CustomerServiceTools,
+) -> None:
+    result = tools.execute(
+        tool_name="check_refund_eligibility",
+        arguments={
+            "order_id": "DEMO-1001",
+            "customer_id": "demo_customer",
+        },
+    )
+
+    assert result.success is True
+    assert result.result is not None
+    assert result.result["found"] is True
+    assert result.result["eligible"] is True
+    assert result.result["refundable_days"] == 7
+
+
 def test_evaluation_record_can_be_saved(
     temporary_database: Path,
 ) -> None:
@@ -236,6 +283,11 @@ def test_evaluation_record_can_be_saved(
         success=True,
         auto_resolved=True,
         total_duration_ms=500.0,
+        conversation_id="conv-eval-1",
+        rewritten_question="客服的人工服务时间是什么？",
+        planning_steps=["1:search_knowledge_base", "2:finish"],
+        token_usage=TokenUsage(total_tokens=42),
+        stage_durations_ms={"agent_execution": 120.0},
     )
 
     repository.save(record)
@@ -255,6 +307,10 @@ def test_evaluation_record_can_be_saved(
     assert saved.retrieved_chunk_ids == [
         "chunk_test_001"
     ]
+    assert saved.conversation_id == "conv-eval-1"
+    assert saved.rewritten_question == "客服的人工服务时间是什么？"
+    assert saved.planning_steps[-1] == "2:finish"
+    assert saved.token_usage.total_tokens == 42
 
 
 def test_user_feedback_is_preserved(

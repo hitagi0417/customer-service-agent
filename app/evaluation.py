@@ -56,11 +56,12 @@ class EvaluationRepository:
                     auto_resolved,
                     error,
                     total_duration_ms,
+                    trace_metadata,
                     user_feedback,
                     created_at
                 )
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 ON CONFLICT(request_id) DO UPDATE SET
                     question = excluded.question,
@@ -76,6 +77,7 @@ class EvaluationRepository:
                     auto_resolved = excluded.auto_resolved,
                     error = excluded.error,
                     total_duration_ms = excluded.total_duration_ms,
+                    trace_metadata = excluded.trace_metadata,
                     user_feedback = COALESCE(
                         evaluation_records.user_feedback,
                         excluded.user_feedback
@@ -110,6 +112,22 @@ class EvaluationRepository:
                     int(record.auto_resolved),
                     record.error,
                     record.total_duration_ms,
+                    json.dumps(
+                        {
+                            "conversation_id": record.conversation_id,
+                            "rewritten_question": (
+                                record.rewritten_question
+                            ),
+                            "planning_steps": record.planning_steps,
+                            "token_usage": (
+                                record.token_usage.model_dump()
+                            ),
+                            "stage_durations_ms": (
+                                record.stage_durations_ms
+                            ),
+                        },
+                        ensure_ascii=False,
+                    ),
                     record.user_feedback,
                     record.created_at.isoformat(),
                 ),
@@ -151,6 +169,7 @@ class EvaluationRepository:
                     auto_resolved,
                     error,
                     total_duration_ms,
+                    trace_metadata,
                     user_feedback,
                     created_at
                 FROM evaluation_records
@@ -199,6 +218,7 @@ class EvaluationRepository:
                     auto_resolved,
                     error,
                     total_duration_ms,
+                    trace_metadata,
                     user_feedback,
                     created_at
                 FROM evaluation_records
@@ -382,9 +402,23 @@ class EvaluationRepository:
         """
         把SQLite查询结果转换回EvaluationRecord。
         """
+        trace_metadata = json.loads(
+            row["trace_metadata"] or "{}"
+        )
         return EvaluationRecord(
             request_id=row["request_id"],
             question=row["question"],
+            conversation_id=trace_metadata.get("conversation_id"),
+            rewritten_question=trace_metadata.get(
+                "rewritten_question"
+            ),
+            planning_steps=trace_metadata.get(
+                "planning_steps", []
+            ),
+            token_usage=trace_metadata.get("token_usage", {}),
+            stage_durations_ms=trace_metadata.get(
+                "stage_durations_ms", {}
+            ),
 
             predicted_intent=IntentType(
                 row["predicted_intent"]

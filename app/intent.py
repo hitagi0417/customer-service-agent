@@ -9,7 +9,11 @@ from openai import (
 from pydantic import ValidationError
 
 from app.config import settings
-from app.schemas import IntentResult, IntentType
+from app.schemas import (
+    IntentResult,
+    IntentType,
+    token_usage_from_response,
+)
 
 
 INTENT_SYSTEM_PROMPT = """
@@ -146,7 +150,14 @@ class IntentClassifier:
                 raise ValueError("模型返回内容为空")
 
             # 直接使用Pydantic解析和校验模型返回的JSON。
-            return IntentResult.model_validate_json(content)
+            result = IntentResult.model_validate_json(content)
+            return result.model_copy(
+                update={
+                    "token_usage": token_usage_from_response(
+                        response
+                    )
+                }
+            )
 
         except APITimeoutError:
             return IntentResult(

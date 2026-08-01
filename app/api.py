@@ -220,6 +220,7 @@ def create_app(
                     conversation_id=(
                         payload.conversation_id
                     ),
+                    customer_id=payload.customer_id,
                 )
 
         try:
